@@ -730,6 +730,7 @@ print.po_search_result <- function(x, ...) {
 #' @param clean_names Logical. Clean column names for R compatibility (default TRUE)
 #' @param save_to Directory path to save downloaded files (default NULL = no saving)
 #' @param encoding Character encoding: "UTF-8" (default), "Latin1", "Windows-1252", "ISO-8859-1", or "auto"
+#' @param use_cache Logical. Use cached files if available (default TRUE)
 #' @param verbose Logical. Show download progress (default TRUE)
 #'
 #' @return Depending on input:
@@ -765,6 +766,10 @@ print.po_search_result <- function(x, ...) {
 #' # Force specific encoding for Spanish characters
 #' data <- po_get("resource-id", encoding = "Windows-1252")
 #' data <- po_get("resource-id", encoding = "ISO-8859-1")
+#' 
+#' # Cache control examples
+#' data <- po_get("resource-id")  # Uses cache if available
+#' data <- po_get("resource-id", use_cache = FALSE)  # Force fresh download
 #' }
 po_get <- function(identifier, 
                    what = c("data", "info", "all"),
@@ -772,6 +777,7 @@ po_get <- function(identifier,
                    clean_names = TRUE,
                    save_to = NULL,
                    encoding = c("UTF-8", "Latin1", "Windows-1252", "ISO-8859-1", "auto"),
+                   use_cache = TRUE,
                    verbose = TRUE) {
   
   what <- match.arg(what)
@@ -796,14 +802,14 @@ po_get <- function(identifier,
     
     # Process multiple resources
     return(process_multiple_resources(resource_ids, resource_names, what, clean_names, 
-                                     save_to, encoding, verbose, catalog))
+                                     save_to, encoding, use_cache, verbose, catalog))
   }
   
   # Check if multiple identifiers provided as vector
   if (length(identifier) > 1) {
     # Process multiple resources
     return(process_multiple_resources(identifier, identifier, what, clean_names, 
-                                     save_to, encoding, verbose, catalog))
+                                     save_to, encoding, use_cache, verbose, catalog))
   }
   
   # Single identifier processing (original logic)
@@ -839,7 +845,7 @@ po_get <- function(identifier,
     }
     
     data <- tryCatch({
-      po_load_resource(identifier, clean_names = clean_names, encoding = encoding, path = save_path)
+      po_load_resource(identifier, clean_names = clean_names, encoding = encoding, path = save_path, use_cache = use_cache)
     }, error = function(e) {
       stop("Failed to load resource: ", e$message)
     })
@@ -917,7 +923,7 @@ po_get <- function(identifier,
   # Load the data
   data <- tryCatch({
     po_load_resource(selected_resource$resource_id, clean_names = clean_names, 
-                    encoding = encoding, path = save_path)
+                    encoding = encoding, path = save_path, use_cache = use_cache)
   }, error = function(e) {
     stop("Failed to load data: ", e$message)
   })
@@ -936,7 +942,7 @@ po_get <- function(identifier,
 
 # Helper function to process multiple resources
 process_multiple_resources <- function(resource_ids, resource_names, what, clean_names, 
-                                     save_to, encoding, verbose, catalog) {
+                                     save_to, encoding, use_cache, verbose, catalog) {
   n_resources <- length(resource_ids)
   
   if (n_resources == 0) {
@@ -991,7 +997,7 @@ process_multiple_resources <- function(resource_ids, resource_names, what, clean
     # Try to load the resource
     result <- tryCatch({
       data <- po_load_resource(resource_id, clean_names = clean_names, 
-                              encoding = encoding, path = save_path)
+                              encoding = encoding, path = save_path, use_cache = use_cache)
       
       if (what == "data") {
         data
