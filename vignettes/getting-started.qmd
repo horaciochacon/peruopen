@@ -1,0 +1,224 @@
+---
+title: "Getting Started with peruopen"
+format: html
+vignette: >
+  %\VignetteIndexEntry{Getting Started with peruopen}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| include: false
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r}
+#| label: setup
+library(peruopen)
+```
+
+## Overview
+
+The **peruopen** package provides a comprehensive interface to Peru's CKAN data portal ([datosabiertos.gob.pe](https://datosabiertos.gob.pe)), enabling you to search, discover, and download open government datasets directly into R.
+
+With **peruopen**, you can access over 3,954 datasets and 10,000+ resources from 283+ government organizations in Peru.
+
+## Installation
+
+Install the package from GitHub:
+
+```{r}
+# Install from GitHub
+devtools::install_github("horaciochacon/peruopen")
+library(peruopen)
+```
+
+## Basic Usage
+
+### 1. Get the Complete Data Catalog
+
+Start by getting the complete catalog of all available datasets:
+
+```{r}
+# Get the complete catalog (may take a few minutes on first run)
+catalog <- po_catalog(refresh = TRUE)
+
+# Explore the catalog structure
+catalog
+catalog$datasets
+catalog$resources
+```
+
+The catalog contains:
+- **datasets**: Information about all available datasets
+- **resources**: Details about individual files and data resources  
+- **summary**: Statistics about the catalog
+
+### 2. Search for CDC Data
+
+Search for surveillance data from CDC (Centro Nacional de Epidemiología):
+
+```{r}
+# Search for datasets with CDC tags
+vigilancia <- po_search(tags = "cdc")
+vigilancia
+
+# Explore the results
+vigilancia$datasets
+vigilancia$resources
+```
+
+### 3. Download CDC Data
+
+Download resources directly into R:
+
+```{r}
+# Download all resources from the CDC search
+po_get(vigilancia$resources)
+```
+
+### 4. Search by Organization
+
+Find data from specific government organizations like MINSA:
+
+```{r}
+# Search for all MINSA (Ministry of Health) datasets
+minsa <- po_search(organizations = "MINSA")
+minsa
+minsa$datasets
+```
+
+### 5. Geographic Data from INEI
+
+Search for ubigeo (geographic codes) data from INEI:
+
+```{r}
+# Search for ubigeo data from INEI using both tags and organization
+ubigeo <- po_search(tags = "ubigeo", organizations = "INEI")
+ubigeo
+ubigeo$datasets
+ubigeo$resources
+
+# Download the ubigeo data
+po_get(ubigeo$resources)
+```
+
+### 6. Survey Data Analysis
+
+Search for demographic survey data:
+
+```{r}
+# Search for ENDES (Demographic and Health Survey) data from INEI
+endes <- po_search(query = "ENDES", organizations = "INEI")
+endes
+endes$datasets
+```
+
+## Interactive Data Exploration
+
+Use `po_explore()` to get organized views of the data catalog:
+
+```{r}
+# General exploration of all data
+overview <- po_explore()
+
+# Explore health-related data specifically
+health_data <- po_explore("salud")
+
+# See what organizations publish the most data
+overview$by_organization
+
+# Find the most common file formats
+overview$by_format
+```
+
+## Advanced Search Features
+
+### Format-specific Downloads
+
+```{r}
+# Find all CSV files about education
+education_csv <- po_search("educacion", formats = "CSV")
+
+# Get only Excel files
+excel_data <- po_search(formats = c("XLSX", "XLS"))
+```
+
+### Combined Search Criteria
+
+```{r}
+# Find health datasets from MINSA in CSV format
+health_csv <- po_search(
+  query = "salud",
+  organizations = "MINSA", 
+  formats = "CSV"
+)
+
+# Search by multiple tags
+health_tags <- po_search(tags = c("salud", "epidemiologia"))
+```
+
+### Save Files Locally
+
+```{r}
+# Download and save files to local directory
+po_get("dataset-name", save_to = "data/peru/")
+```
+
+## Common Use Cases
+
+### Health Data Analysis
+
+```{r}
+# Get all health datasets from MINSA
+health_data <- po_search(organizations = "MINSA")
+
+# Find COVID-19 related data
+covid_data <- po_search("covid")
+
+# Get malaria surveillance data
+malaria <- po_search("malaria", formats = "CSV")
+```
+
+### Economic and Budget Data
+
+```{r}
+# Find budget execution data from MEF
+budget_data <- po_search(organizations = "MEF")
+
+# Search for economic indicators
+economic <- po_search("economico")
+```
+
+### Geographic and Census Data
+
+```{r}
+# Get census data from INEI
+census_data <- po_search(organizations = "INEI", tags = "censo")
+
+# Find geographic boundary data
+boundaries <- po_search("limite", formats = "SHP")
+```
+
+## Data Coverage
+
+Peru's open data portal includes datasets from:
+
+- **MINSA** - Ministry of Health (epidemiological data, health statistics)
+- **MEF** - Ministry of Economy (budget execution, economic indicators)
+- **MINEDU** - Ministry of Education (educational statistics)
+- **INEI** - National Statistics Institute (census, demographic data)
+- **Regional Governments** - Local statistics and programs
+- **283+ organizations** total
+
+The portal contains approximately 1.7 TB of data across all resources.
+
+## Getting Help
+
+- Use `?function_name` for help with specific functions
+- Browse the [function reference](https://horaciochacon.github.io/peruopen/reference/)
+- Report issues at [GitHub](https://github.com/horaciochacon/peruopen/issues)

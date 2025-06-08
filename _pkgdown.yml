@@ -53,11 +53,16 @@ reference:
   - cache_info
   - clear_cache
 
-- title: Print Methods
-  desc: Print methods for package objects
+- title: Print Methods and Utilities
+  desc: Print methods and utility functions for package objects
   contents:
   - print.po_search_result
   - print.po_explore_result
+  - print.po_datasets
+  - print.po_resources
+  - as_tibble.po_datasets
+  - as_tibble.po_resources
+  - clear_resource_cache
 
 articles:
 - title: Getting Started
