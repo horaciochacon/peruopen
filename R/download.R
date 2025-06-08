@@ -5,6 +5,7 @@
 #' @param overwrite Logical. Whether to overwrite existing files (default FALSE)
 #' @param use_cache Logical. Use cached files if available (default TRUE)
 #' @return Character path to downloaded file
+#' @keywords internal
 # Internal function - use po_get() instead
 #' @importFrom httr2 request req_user_agent req_timeout req_perform resp_body_raw
 #' @importFrom fs path path_temp
@@ -88,6 +89,7 @@ po_download_resource <- function(resource_id, path = NULL, overwrite = FALSE, us
 #' @param use_cache Logical. Use cached files if available (default TRUE)
 #' @param ... Additional arguments passed to reading functions
 #' @return Data frame or file path for unsupported formats
+#' @keywords internal
 # Internal function - use po_get() instead
 po_load_resource <- function(resource_id, format = NULL, clean_names = TRUE, 
                            encoding = "UTF-8", path = NULL, use_cache = TRUE, ...) {
@@ -291,6 +293,7 @@ fix_encoding_issues <- function(df) {
 #'
 #' @param resource_id Character. The resource ID
 #' @return Character URL for the resource
+#' @keywords internal
 # Internal function - use po_get() instead
 po_get_resource_url <- function(resource_id) {
   if (missing(resource_id) || is.null(resource_id) || resource_id == "") {

@@ -15,3 +15,4 @@ po_catalog_rebuild(target_size = 3000, verbose = TRUE)
 Workaround for extension caching issue. Clears cache and rebuilds
 catalog from scratch with target size.
 }
+\keyword{internal}

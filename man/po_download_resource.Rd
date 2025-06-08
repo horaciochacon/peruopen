@@ -26,3 +26,4 @@ Character path to downloaded file
 \description{
 Download a resource file
 }
+\keyword{internal}

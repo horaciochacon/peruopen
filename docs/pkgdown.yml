@@ -3,7 +3,7 @@ pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   getting-started: getting-started.html
-last_built: 2025-06-08T01:21Z
+last_built: 2025-06-08T23:02Z
 urls:
-  reference: https://yourusername.github.io/peruopen/reference
-  article: https://yourusername.github.io/peruopen/articles
+  reference: https://horaciochacon.github.io/peruopen/reference
+  article: https://horaciochacon.github.io/peruopen/articles

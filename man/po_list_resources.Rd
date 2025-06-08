@@ -26,3 +26,4 @@ A tibble with resource information
 \description{
 List resources for a dataset
 }
+\keyword{internal}

@@ -32,3 +32,4 @@ A tibble with filtered dataset information
 \description{
 Search datasets with filters (FAST - using efficient API endpoint)
 }
+\keyword{internal}

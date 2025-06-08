@@ -2,6 +2,7 @@
 #'
 #' @param use_cache Logical. Whether to use cached results (default TRUE)
 #' @return A tibble with dataset names
+#' @keywords internal
 # Internal function - use po_catalog() instead
 #' @importFrom tibble tibble
 #' @importFrom dplyr bind_rows filter mutate select
@@ -31,6 +32,7 @@ po_list_datasets <- function(use_cache = TRUE) {
 #' @param use_cache Logical. Whether to use cached results (default TRUE)
 #' @param clean_text Logical. Whether to clean HTML and formatting (default TRUE)
 #' @return A tibble with filtered dataset information
+#' @keywords internal
 # Internal function - use po_search() instead
 po_search_datasets <- function(query = NULL, tags = NULL, organizations = NULL, 
                               limit = 50, use_cache = TRUE, clean_text = TRUE) {
@@ -123,6 +125,7 @@ po_search_datasets <- function(query = NULL, tags = NULL, organizations = NULL,
 #'
 #' @param use_cache Logical. Whether to use cached results (default TRUE)
 #' @return A tibble with organization information
+#' @keywords internal
 # Internal function - organization info available in po_catalog()
 po_list_organizations <- function(use_cache = TRUE) {
   if (use_cache) {
@@ -151,6 +154,7 @@ po_list_organizations <- function(use_cache = TRUE) {
 #' @param page_size Integer. Results per API call (default 100)
 #' @param clean_text Logical. Whether to clean HTML and formatting (default TRUE)
 #' @return A tibble with filtered dataset information
+#' @keywords internal
 # Internal function - use po_search() instead
 po_search_datasets_paginated <- function(query = NULL, tags = NULL, organizations = NULL, 
                                          max_results = 500, page_size = 100, clean_text = TRUE) {
@@ -264,6 +268,7 @@ po_search_datasets_paginated <- function(query = NULL, tags = NULL, organization
 #' @param use_cache Logical. Whether to use cached results (default TRUE)
 #' @param clean_text Logical. Whether to clean HTML and formatting (default TRUE)
 #' @return A list with datasets tibble and resources tibble
+#' @keywords internal
 # Internal function - use po_catalog() instead
 po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations = NULL, 
                                       limit = 50, use_cache = TRUE, clean_text = TRUE) {
@@ -430,6 +435,7 @@ po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations 
 #'
 #' @param use_cache Logical. Whether to use cached results (default TRUE)
 #' @return Integer count of total datasets
+#' @keywords internal
 # Internal function - count available in po_catalog()$summary
 po_get_dataset_count <- function(use_cache = TRUE) {
   packages <- po_list_datasets(use_cache = use_cache)

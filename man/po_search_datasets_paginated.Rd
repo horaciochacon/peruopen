@@ -32,3 +32,4 @@ A tibble with filtered dataset information
 \description{
 Search datasets with pagination support for large result sets
 }
+\keyword{internal}

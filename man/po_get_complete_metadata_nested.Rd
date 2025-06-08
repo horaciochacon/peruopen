@@ -32,3 +32,4 @@ A nested list structure with complete metadata per dataset
 \description{
 Get complete dataset metadata in nested list format with data cleaning
 }
+\keyword{internal}

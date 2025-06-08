@@ -15,3 +15,4 @@ Integer count of total datasets
 \description{
 Get total number of datasets
 }
+\keyword{internal}

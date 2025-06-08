@@ -15,3 +15,4 @@ A tibble with dataset names
 \description{
 List all available datasets from Peru's CKAN portal
 }
+\keyword{internal}

@@ -7,6 +7,7 @@
 #' @param page_size Integer. Results per API call (default 200)
 #' @param clean_text Logical. Whether to clean HTML and formatting (default TRUE)
 #' @return A nested list structure with complete metadata per dataset
+#' @keywords internal
 # Internal function - use po_catalog() instead
 #' @importFrom tibble tibble
 #' @importFrom dplyr filter

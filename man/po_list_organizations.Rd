@@ -15,3 +15,4 @@ A tibble with organization information
 \description{
 Get available organizations/groups from CKAN portal
 }
+\keyword{internal}

@@ -1,4 +1,5 @@
 url: https://horaciochacon.github.io/peruopen/
+
 template:
   bootstrap: 5
   
@@ -10,7 +11,7 @@ home:
 
 navbar:
   structure:
-    left:  [intro, reference, articles, tutorials, news]
+    left:  [intro, reference, articles, news]
     right: [search, github]
   components:
     articles:
@@ -23,35 +24,18 @@ reference:
 - title: Main Functions
   desc: Core functions for searching and downloading data
   contents:
-  - peruopen
+  - peruopen-package
   - po_catalog
   - po_search
   - po_get
   - po_explore
-
-- title: Helper Functions
-  desc: Support functions for data discovery and metadata
-  contents:
-  - po_list_datasets
-  - po_list_organizations
-  - po_list_resources
-  - po_get_dataset_metadata
-  - po_get_resource_metadata
-  - po_download_resource
-  - po_load_resource
-  - po_catalog_rebuild
-  - po_get_complete_metadata_nested
-  - po_get_dataset_count
-  - po_get_resource_url
-  - po_get_structured_metadata
-  - po_search_datasets
-  - po_search_datasets_paginated
 
 - title: Cache Management
   desc: Functions for managing cached data
   contents:
   - cache_info
   - clear_cache
+  - clear_resource_cache
 
 - title: Print Methods and Utilities
   desc: Print methods and utility functions for package objects
@@ -62,17 +46,12 @@ reference:
   - print.po_resources
   - as_tibble.po_datasets
   - as_tibble.po_resources
-  - clear_resource_cache
 
 articles:
 - title: Getting Started
   navbar: ~
   contents:
   - getting-started
-
-format:
-  html:
-    toc: true
 
 development:
   mode: auto

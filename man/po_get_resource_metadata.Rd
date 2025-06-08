@@ -15,3 +15,4 @@ A list with resource metadata
 \description{
 Get metadata for a specific resource
 }
+\keyword{internal}

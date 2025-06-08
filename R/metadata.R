@@ -4,6 +4,7 @@
 #' @param use_cache Logical. Whether to use cached results (default TRUE)
 #' @param clean_text Logical. Whether to clean HTML and formatting (default TRUE)
 #' @return A list with comprehensive dataset metadata
+#' @keywords internal
 # Internal function - use po_get() instead
 #' @importFrom tibble tibble
 #' @importFrom dplyr mutate select
@@ -97,6 +98,7 @@ po_get_dataset_metadata <- function(dataset_id, use_cache = TRUE, clean_text = T
 #'
 #' @param resource_id Character. The resource ID
 #' @return A list with resource metadata
+#' @keywords internal
 # Internal function - use po_get() instead
 po_get_resource_metadata <- function(resource_id) {
   if (missing(resource_id) || is.null(resource_id) || resource_id == "") {
@@ -143,6 +145,7 @@ po_get_resource_metadata <- function(resource_id) {
 #' @param use_cache Logical. Whether to use cached results (default TRUE)
 #' @param clean_text Logical. Whether to clean HTML and formatting (default TRUE)
 #' @return A tibble with resource information
+#' @keywords internal
 # Internal function - use po_get() or po_catalog() instead
 po_list_resources <- function(dataset_id, format = NULL, use_cache = TRUE, clean_text = TRUE) {
   metadata <- po_get_dataset_metadata(dataset_id, use_cache = use_cache, clean_text = clean_text)

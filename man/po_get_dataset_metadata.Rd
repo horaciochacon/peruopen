@@ -19,3 +19,4 @@ A list with comprehensive dataset metadata
 \description{
 Get detailed metadata for a dataset
 }
+\keyword{internal}

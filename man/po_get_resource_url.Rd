@@ -15,3 +15,4 @@ Character URL for the resource
 \description{
 Get the download URL for a resource
 }
+\keyword{internal}

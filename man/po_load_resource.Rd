@@ -35,3 +35,4 @@ Data frame or file path for unsupported formats
 \description{
 Load a resource directly into R
 }
+\keyword{internal}

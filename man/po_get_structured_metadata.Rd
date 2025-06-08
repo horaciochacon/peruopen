@@ -32,3 +32,4 @@ A list with datasets tibble and resources tibble
 \description{
 Get detailed tabular metadata including all resources
 }
+\keyword{internal}

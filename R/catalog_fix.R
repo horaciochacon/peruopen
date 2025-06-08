@@ -8,6 +8,7 @@
 #'
 #' @param target_size Number of datasets to load
 #' @param verbose Show progress
+#' @keywords internal
 # Internal utility function
 po_catalog_rebuild <- function(target_size = 3000, verbose = TRUE) {
   
