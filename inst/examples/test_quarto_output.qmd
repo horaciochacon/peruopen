@@ -1,0 +1,59 @@
+---
+title: "Testing Quarto Output for peruopen"
+format: html
+editor: visual
+---
+
+# Testing knit_print Methods
+
+This document tests the new `knit_print` methods for the peruopen package to ensure that output renders nicely in Quarto/markdown environments.
+
+```{r setup}
+#| message: false
+library(peruopen)
+```
+
+## Test po_search Output
+
+```{r search-test}
+# Test search results
+results <- po_search("salud", max_results = 10)
+results
+```
+
+## Test po_explore Output
+
+```{r explore-test}
+# Test exploration results  
+exploration <- po_explore("educacion", max_datasets = 5)
+exploration
+```
+
+## Test po_datasets Output
+
+```{r datasets-test}
+# Test datasets display
+datasets <- po_list_datasets(limit = 5)
+datasets
+```
+
+## Test po_resources Output
+
+```{r resources-test}
+# Test resources display
+resources <- po_list_resources(limit = 5)
+resources
+```
+
+## Console vs. Quarto Comparison
+
+The above outputs should render as nicely formatted markdown with:
+
+- Headers (`#` and `##`)
+- Bold text (`**bold**`)
+- Italic text (`*italic*`)
+- Bullet points (`-`)
+- Horizontal rules (`---`)
+- Code formatting (`` `code` ``)
+
+While in the console, the same objects should display with CLI colors and formatting.

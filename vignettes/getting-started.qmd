@@ -12,7 +12,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = TRUE
 )
 ```
 
@@ -31,7 +31,7 @@ With **peruopen**, you can access over 3,954 datasets and 10,000+ resources from
 
 Install the package from GitHub:
 
-```{r}
+```{r, eval=FALSE}
 # Install from GitHub
 devtools::install_github("horaciochacon/peruopen")
 library(peruopen)
@@ -48,7 +48,6 @@ Start by getting the complete catalog of all available datasets:
 catalog <- po_catalog(refresh = TRUE)
 
 # Explore the catalog structure
-catalog
 catalog$datasets
 catalog$resources
 ```
@@ -78,7 +77,9 @@ Download resources directly into R:
 
 ```{r}
 # Download all resources from the CDC search
-po_get(vigilancia$resources)
+vigilancia <- po_get(vigilancia$resources)
+
+names(vigilancia)
 ```
 
 ### 4. Search by Organization
@@ -104,7 +105,7 @@ ubigeo$datasets
 ubigeo$resources
 
 # Download the ubigeo data
-po_get(ubigeo$resources)
+po_get(ubigeo$resources[4,])
 ```
 
 ### 6. Survey Data Analysis
@@ -118,24 +119,6 @@ endes
 endes$datasets
 ```
 
-## Interactive Data Exploration
-
-Use `po_explore()` to get organized views of the data catalog:
-
-```{r}
-# General exploration of all data
-overview <- po_explore()
-
-# Explore health-related data specifically
-health_data <- po_explore("salud")
-
-# See what organizations publish the most data
-overview$by_organization
-
-# Find the most common file formats
-overview$by_format
-```
-
 ## Advanced Search Features
 
 ### Format-specific Downloads
@@ -143,9 +126,11 @@ overview$by_format
 ```{r}
 # Find all CSV files about education
 education_csv <- po_search("educacion", formats = "CSV")
+education_csv$resources
 
 # Get only Excel files
-excel_data <- po_search(formats = c("XLSX", "XLS"))
+excel_data <- po_search("educacion", formats = c("XLSX", "XLS"))
+excel_data$resources
 ```
 
 ### Combined Search Criteria
@@ -157,14 +142,16 @@ health_csv <- po_search(
   organizations = "MINSA", 
   formats = "CSV"
 )
+health_csv
 
 # Search by multiple tags
 health_tags <- po_search(tags = c("salud", "epidemiologia"))
+health_tags
 ```
 
 ### Save Files Locally
 
-```{r}
+```{r, eval=FALSE}
 # Download and save files to local directory
 po_get("dataset-name", save_to = "data/peru/")
 ```
@@ -175,34 +162,25 @@ po_get("dataset-name", save_to = "data/peru/")
 
 ```{r}
 # Get all health datasets from MINSA
-health_data <- po_search(organizations = "MINSA")
+po_search(organizations = "MINSA")
 
 # Find COVID-19 related data
-covid_data <- po_search("covid")
+po_search("covid")
 
 # Get malaria surveillance data
-malaria <- po_search("malaria", formats = "CSV")
+ po_search("malaria", formats = "CSV")
 ```
 
 ### Economic and Budget Data
 
 ```{r}
 # Find budget execution data from MEF
-budget_data <- po_search(organizations = "MEF")
+po_search(organizations = "MEF")
 
 # Search for economic indicators
-economic <- po_search("economico")
+po_search("economico")
 ```
 
-### Geographic and Census Data
-
-```{r}
-# Get census data from INEI
-census_data <- po_search(organizations = "INEI", tags = "censo")
-
-# Find geographic boundary data
-boundaries <- po_search("limite", formats = "SHP")
-```
 
 ## Data Coverage
 
