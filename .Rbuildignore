@@ -1,2 +1,17 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^README\.Rmd$
+^LICENSE\.md$
+^\.github$
+^\.git$
+^\.gitignore$
+^\.claude$
+^debug_.*\.R$
+^docs$
+^_pkgdown\.yml$
+^\.quarto$
+^vignettes_temp$
+^\.Rcheck$
+^.*\.Rcheck$
+^\.RData$
+EOF < /dev/null

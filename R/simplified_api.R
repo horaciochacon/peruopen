@@ -707,37 +707,42 @@ po_search <- function(query = NULL,
 }
 
 #' Print method for po_search results
+#' @param x A po_search_result object
+#' @param ... Additional arguments passed to print methods
 #' @export
 print.po_search_result <- function(x, ...) {
-  cat("Peru Open Data Search Results\n")
-  cat("Query:", x$summary$query, "\n")
-  cat("Found:", x$summary$n_datasets, "datasets with", x$summary$n_resources, "resources\n")
-  cat("Total size:", x$summary$total_size_gb, "GB\n")
+  cli::cli_h1("Peru Open Data Search Results")
+  cli::cli_text("Query: {cli::col_cyan(x$summary$query)}")
+  cli::cli_text("Found: {cli::col_green(x$summary$n_datasets)} datasets with {cli::col_green(x$summary$n_resources)} resources")
+  cli::cli_text("Total size: {cli::col_yellow(paste0(x$summary$total_size_gb, ' GB'))}")
   
   if (length(x$summary$formats_found) > 0) {
-    cat("\nTop formats:\n")
+    cli::cli_h2("Top formats")
     top_formats <- head(x$summary$formats_found, 5)
     for (i in seq_along(top_formats)) {
-      cat(sprintf("  %s: %d files\n", names(top_formats)[i], top_formats[i]))
+      cli::cli_text("  {cli::col_blue(names(top_formats)[i])}: {top_formats[i]} files")
     }
   }
   
   if (x$summary$n_datasets > 0) {
-    cat("\nSample datasets:\n")
+    cli::cli_h2("Sample datasets")
     sample_data <- head(x$datasets[, c("title", "organization", "n_resources")], 5)
     for (i in 1:nrow(sample_data)) {
-      cat(sprintf("  - %s (%s) [%d resources]\n", 
-                  substr(sample_data$title[i], 1, 50),
-                  sample_data$organization[i],
-                  sample_data$n_resources[i]))
+      title_truncated <- if (nchar(sample_data$title[i]) > 50) {
+        paste0(substr(sample_data$title[i], 1, 47), "...")
+      } else {
+        sample_data$title[i]
+      }
+      cli::cli_text("  {cli::symbol$bullet} {cli::style_bold(title_truncated)} ({cli::col_magenta(sample_data$organization[i])}) [{cli::col_green(sample_data$n_resources[i])} resources]")
     }
     
     if (x$summary$n_datasets > 5) {
-      cat(sprintf("  ... and %d more datasets\n", x$summary$n_datasets - 5))
+      cli::cli_text("  {cli::col_silver('... and')} {cli::col_green(x$summary$n_datasets - 5)} {cli::col_silver('more datasets')}")
     }
   }
   
-  cat("\nAccess data with: $datasets, $resources, $summary\n")
+  cli::cli_rule()
+  cli::cli_text("{cli::col_blue('Access data with:')} $datasets, $resources, $summary")
   invisible(x)
 }
 
@@ -1250,51 +1255,54 @@ po_explore <- function(query = NULL, verbose = TRUE) {
 }
 
 #' Print method for po_explore results
+#' @param x A po_explore_result object
+#' @param ... Additional arguments passed to print methods
 #' @export
 print.po_explore_result <- function(x, ...) {
-  cat("Peru Open Data Exploration\n")
-  if (!is.null(x$query)) cat("Query:", x$query, "\n")
-  cat("=====================================\n\n")
+  cli::cli_h1("Peru Open Data Exploration")
+  if (!is.null(x$query)) cli::cli_text("Query: {cli::col_cyan(x$query)}")
   
-  cat("SUMMARY\n")
-  cat("  Datasets:", x$summary$n_datasets, "\n")
-  cat("  Resources:", x$summary$n_resources, "\n")
-  cat("  Organizations:", x$summary$n_organizations, "\n")
-  cat("  Date range:", paste(x$summary$date_range, collapse = " to "), "\n\n")
+  cli::cli_h2("Summary")
+  cli::cli_text("  Datasets: {cli::col_green(x$summary$n_datasets)}")
+  cli::cli_text("  Resources: {cli::col_green(x$summary$n_resources)}")
+  cli::cli_text("  Organizations: {cli::col_green(x$summary$n_organizations)}")
+  cli::cli_text("  Date range: {cli::col_yellow(paste(x$summary$date_range, collapse = ' to '))}")
   
-  cat("TOP ORGANIZATIONS\n")
+  cli::cli_h2("Top Organizations")
   top_orgs <- head(x$by_organization, 5)
   for (i in seq_along(top_orgs)) {
     org <- names(top_orgs)[i]
     info <- top_orgs[[i]]
-    cat(sprintf("  %d. %s: %d datasets, %d resources\n", 
-                i, org, info$n_datasets, info$n_resources))
+    cli::cli_text("  {cli::col_blue(i)}. {cli::style_bold(org)}: {cli::col_green(info$n_datasets)} datasets, {cli::col_green(info$n_resources)} resources")
   }
   
-  cat("\nTOP FORMATS\n")
+  cli::cli_h2("Top Formats")
   top_formats <- head(x$by_format, 5)
   for (i in seq_along(top_formats)) {
     fmt <- names(top_formats)[i]
     info <- top_formats[[i]]
-    cat(sprintf("  %s: %d files (avg %.1f MB)\n", 
-                fmt, info$n_resources, info$avg_size_mb))
+    cli::cli_text("  {cli::col_blue(fmt)}: {cli::col_green(info$n_resources)} files (avg {cli::col_yellow(paste0(info$avg_size_mb, ' MB'))})")
   }
   
-  cat("\nRECENT UPDATES\n")
+  cli::cli_h2("Recent Updates")
   for (i in 1:min(5, nrow(x$recent))) {
-    cat(sprintf("  - %s (%s)\n", 
-                substr(x$recent$title[i], 1, 50),
-                x$recent$last_updated[i]))
+    title_truncated <- if (nchar(x$recent$title[i]) > 50) {
+      paste0(substr(x$recent$title[i], 1, 47), "...")
+    } else {
+      x$recent$title[i]
+    }
+    cli::cli_text("  {cli::symbol$bullet} {cli::style_bold(title_truncated)} ({cli::col_cyan(x$recent$last_updated[i])})")
   }
   
   if (!is.null(x$recommendations$csv_available)) {
-    cat("\nRECOMMENDED DATASETS (with CSV)\n")
+    cli::cli_h2("Recommended Datasets (with CSV)")
     for (i in 1:nrow(x$recommendations$csv_available)) {
-      cat(sprintf("  - %s\n", x$recommendations$csv_available$dataset_name[i]))
+      cli::cli_text("  {cli::symbol$bullet} {cli::col_green(x$recommendations$csv_available$dataset_name[i])}")
     }
   }
   
-  cat("\nExplore further with: $by_organization, $by_format, $recent, $popular\n")
+  cli::cli_rule()
+  cli::cli_text("{cli::col_blue('Explore further with:')} $by_organization, $by_format, $recent, $popular")
   invisible(x)
 }
 
@@ -1355,23 +1363,25 @@ wrap_text <- function(text, prefix = "", width = 80, indent = 3) {
 }
 
 #' Print method for datasets tibbles
+#' @param x A po_datasets object
+#' @param max_items Maximum number of items to display
+#' @param ... Additional arguments passed to print methods
 #' @export
 print.po_datasets <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
   n_total <- nrow(x)
   n_show <- min(max_items, n_total)
   
-  cat("Peru Open Data - Datasets (", n_total, " total)\n", sep = "")
-  cat(paste(rep("═", 40), collapse = ""), "\n\n")
+  cli::cli_h1("Peru Open Data - Datasets ({n_total} total)")
   
   if (n_total == 0) {
-    cat("No datasets found.\n")
+    cli::cli_text("{cli::col_red('No datasets found.')}")
     return(invisible(x))
   }
   
   for (i in 1:n_show) {
     row <- x[i, ]
     
-    cat(sprintf("%d. %s\n", i, row$title))
+    cli::cli_text("{cli::col_blue(i)}. {cli::style_bold(row$title)}")
     
     # Organization info
     org_text <- if (is.na(row$organization) || row$organization == "") "[Unknown]" else row$organization
@@ -1382,44 +1392,47 @@ print.po_datasets <- function(x, max_items = getOption("peruopen.print_max", 10)
     # Format info  
     formats_text <- if (is.na(row$formats_available) || row$formats_available == "") "[Unknown]" else row$formats_available
     
-    cat(sprintf("   Organization: %s | Resources: %d (%s) | Size: %s\n",
-                org_text, row$n_resources, formats_text, size_text))
+    cli::cli_text("   Organization: {cli::col_magenta(org_text)} | Resources: {cli::col_green(row$n_resources)} ({cli::col_blue(formats_text)}) | Size: {cli::col_yellow(size_text)}")
     
     # Date info
     updated_text <- if (is.na(row$last_updated)) "[Unknown]" else row$last_updated
     created_text <- if (is.na(row$created)) "[Unknown]" else row$created
     
-    cat(sprintf("   Last updated: %s | Created: %s\n", updated_text, created_text))
+    cli::cli_text("   Last updated: {cli::col_cyan(updated_text)} | Created: {cli::col_cyan(created_text)}")
     
     # Notes (wrapped with proper indentation)
     if (!is.na(row$notes) && row$notes != "") {
       notes_text <- if (nchar(row$notes) > 400) paste0(substr(row$notes, 1, 397), "...") else row$notes
       notes_formatted <- wrap_text(notes_text, "   Notes: ", width = 90, indent = 0)
-      cat(notes_formatted, "\n")
+      cli::cli_text(notes_formatted)
     }
     
-    if (i < n_show) cat("\n")
+    if (i < n_show) cli::cli_text("")
   }
   
   if (n_total > n_show) {
-    cat(sprintf("\n... (showing %d of %d datasets)\n", n_show, n_total))
+    cli::cli_text("")
+    cli::cli_text("{cli::col_silver('... (showing')} {cli::col_green(n_show)} {cli::col_silver('of')} {cli::col_green(n_total)} {cli::col_silver('datasets)')}")
   }
   
-  cat("\nAccess individual datasets: x[1], x[2], etc. | Full tibble: as_tibble(x)\n")
+  cli::cli_rule()
+  cli::cli_text("{cli::col_blue('Access individual datasets:')} x[1], x[2], etc. | {cli::col_blue('Full tibble:')} as_tibble(x)")
   invisible(x)
 }
 
 #' Print method for resources tibbles  
+#' @param x A po_resources object
+#' @param max_items Maximum number of items to display
+#' @param ... Additional arguments passed to print methods
 #' @export
 print.po_resources <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
   n_total <- nrow(x)
   n_show <- min(max_items, n_total)
   
-  cat("Peru Open Data - Resources (", n_total, " total)\n", sep = "")
-  cat(paste(rep("═", 42), collapse = ""), "\n\n")
+  cli::cli_h1("Peru Open Data - Resources ({n_total} total)")
   
   if (n_total == 0) {
-    cat("No resources found.\n")
+    cli::cli_text("{cli::col_red('No resources found.')}")
     return(invisible(x))
   }
   
@@ -1428,43 +1441,47 @@ print.po_resources <- function(x, max_items = getOption("peruopen.print_max", 10
     
     # Resource name and size
     size_text <- if (is.na(row$size_mb)) "[Unknown]" else if (row$size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$size_mb)
-    cat(sprintf("%d. %s (%s)\n", i, row$resource_name, size_text))
+    cli::cli_text("{cli::col_blue(i)}. {cli::style_bold(row$resource_name)} ({cli::col_yellow(size_text)})")
     
     # Dataset info
-    cat(sprintf("   Dataset: %s\n", row$dataset_title))
+    cli::cli_text("   Dataset: {cli::style_italic(row$dataset_title)}")
     
     # Format and date info
     format_text <- if (is.na(row$format)) "[Unknown]" else toupper(row$format)
     modified_text <- if (is.na(row$last_modified)) "[Unknown]" else row$last_modified
     
-    cat(sprintf("   Format: %s | Last modified: %s\n", format_text, modified_text))
+    cli::cli_text("   Format: {cli::col_blue(format_text)} | Last modified: {cli::col_cyan(modified_text)}")
     
     # URL (wrapped with proper indentation)
     if (!is.na(row$url) && row$url != "") {
       url_text <- if (nchar(row$url) > 300) paste0(substr(row$url, 1, 297), "...") else row$url
       url_formatted <- wrap_text(url_text, "   URL: ", width = 90, indent = 0)
-      cat(url_formatted, "\n")
+      cli::cli_text(url_formatted)
     }
     
     # Description (wrapped with proper indentation)
     if (!is.na(row$description) && row$description != "" && row$description != "Resource description") {
       desc_text <- if (nchar(row$description) > 400) paste0(substr(row$description, 1, 397), "...") else row$description
       desc_formatted <- wrap_text(desc_text, "   Description: ", width = 90, indent = 0)
-      cat(desc_formatted, "\n")
+      cli::cli_text(desc_formatted)
     }
     
-    if (i < n_show) cat("\n")
+    if (i < n_show) cli::cli_text("")
   }
   
   if (n_total > n_show) {
-    cat(sprintf("\n... (showing %d of %d resources)\n", n_show, n_total))
+    cli::cli_text("")
+    cli::cli_text("{cli::col_silver('... (showing')} {cli::col_green(n_show)} {cli::col_silver('of')} {cli::col_green(n_total)} {cli::col_silver('resources)')}")
   }
   
-  cat("\nAccess individual resources: x[1], x[2], etc. | Full tibble: as_tibble(x)\n")
+  cli::cli_rule()
+  cli::cli_text("{cli::col_blue('Access individual resources:')} x[1], x[2], etc. | {cli::col_blue('Full tibble:')} as_tibble(x)")
   invisible(x)
 }
 
 #' Convert po_datasets back to regular tibble
+#' @param x A po_datasets object
+#' @param ... Additional arguments passed to as_tibble
 #' @export
 as_tibble.po_datasets <- function(x, ...) {
   class(x) <- class(x)[!class(x) %in% "po_datasets"]
@@ -1472,6 +1489,8 @@ as_tibble.po_datasets <- function(x, ...) {
 }
 
 #' Convert po_resources back to regular tibble  
+#' @param x A po_resources object
+#' @param ... Additional arguments passed to as_tibble
 #' @export
 as_tibble.po_resources <- function(x, ...) {
   class(x) <- class(x)[!class(x) %in% "po_resources"]

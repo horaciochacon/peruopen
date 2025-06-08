@@ -4,7 +4,12 @@
 \alias{as_tibble.po_resources}
 \title{Convert po_resources back to regular tibble}
 \usage{
-as_tibble.po_resources(x, ...)
+\method{as_tibble}{po_resources}(x, ...)
+}
+\arguments{
+\item{x}{A po_resources object}
+
+\item{...}{Additional arguments passed to as_tibble}
 }
 \description{
 Convert po_resources back to regular tibble

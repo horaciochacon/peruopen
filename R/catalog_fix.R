@@ -25,7 +25,7 @@ po_catalog_rebuild <- function(target_size = 3000, verbose = TRUE) {
   catalog <- po_catalog(target_size = target_size, verbose = verbose)
   
   if (verbose) {
-    cat("\n✅ REBUILD COMPLETE\n")
+    cat("\n\u2705 REBUILD COMPLETE\n")
     cat("Final size:", catalog$summary$n_datasets, "datasets\n")
     cat("Coverage:", round(100 * catalog$summary$n_datasets / 3954), "%\n")
   }

@@ -6,6 +6,11 @@
 \usage{
 \method{print}{po_explore_result}(x, ...)
 }
+\arguments{
+\item{x}{A po_explore_result object}
+
+\item{...}{Additional arguments passed to print methods}
+}
 \description{
 Print method for po_explore results
 }

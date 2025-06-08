@@ -151,7 +151,7 @@ po_list_resources <- function(dataset_id, format = NULL, use_cache = TRUE, clean
   if (!is.null(format) && nrow(resources) > 0) {
     format_pattern <- paste0("(?i)", gsub("([.*+?^${}()|\\[\\]\\\\])", "\\\\\\1", format))
     resources <- resources |>
-      dplyr::filter(grepl(format_pattern, format, perl = TRUE, na.rm = TRUE))
+      dplyr::filter(grepl(format_pattern, format, perl = TRUE))
   }
   
   resources

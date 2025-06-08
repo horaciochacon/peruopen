@@ -6,6 +6,13 @@
 \usage{
 \method{print}{po_resources}(x, max_items = getOption("peruopen.print_max", 10), ...)
 }
+\arguments{
+\item{x}{A po_resources object}
+
+\item{max_items}{Maximum number of items to display}
+
+\item{...}{Additional arguments passed to print methods}
+}
 \description{
 Print method for resources tibbles
 }

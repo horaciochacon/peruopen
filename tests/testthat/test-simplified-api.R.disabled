@@ -520,9 +520,7 @@ test_that("print methods work correctly", {
   )
   class(search_result) <- c("po_search_result", "list")
   
-  expect_output(print(search_result), "Peru Open Data Search Results")
-  expect_output(print(search_result), "Query: test")
-  expect_output(print(search_result), "Found: 2 datasets with 5 resources")
+  expect_snapshot(print(search_result))
   
   # Test po_explore_result print
   explore_result <- list(
@@ -551,7 +549,5 @@ test_that("print methods work correctly", {
   )
   class(explore_result) <- c("po_explore_result", "list")
   
-  expect_output(print(explore_result), "Peru Open Data Exploration")
-  expect_output(print(explore_result), "Query: health")
-  expect_output(print(explore_result), "TOP ORGANIZATIONS")
+  expect_snapshot(print(explore_result))
 })

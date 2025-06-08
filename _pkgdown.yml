@@ -1,4 +1,4 @@
-url: https://yourusername.github.io/peruopen/
+url: https://horaciochacon.github.io/peruopen/
 template:
   bootstrap: 5
   
@@ -73,5 +73,5 @@ development:
   mode: auto
   
 authors:
-  Your Name:
-    href: https://github.com/yourusername
+  Horacio Chacón-Torrico:
+    href: https://github.com/horaciochacon

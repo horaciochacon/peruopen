@@ -4,7 +4,12 @@
 \alias{as_tibble.po_datasets}
 \title{Convert po_datasets back to regular tibble}
 \usage{
-as_tibble.po_datasets(x, ...)
+\method{as_tibble}{po_datasets}(x, ...)
+}
+\arguments{
+\item{x}{A po_datasets object}
+
+\item{...}{Additional arguments passed to as_tibble}
 }
 \description{
 Convert po_datasets back to regular tibble
