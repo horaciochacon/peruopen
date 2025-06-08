@@ -1,0 +1,77 @@
+url: https://yourusername.github.io/peruopen/
+template:
+  bootstrap: 5
+  
+home:
+  title: peruopen - Access Peru's Open Data Portal
+  description: >
+    Comprehensive R interface to Peru's CKAN data portal (datosabiertos.gob.pe).
+    Search, discover, and download open government datasets directly into R.
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, tutorials, news]
+    right: [search, github]
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: Getting Started
+        href: articles/getting-started.html
+
+reference:
+- title: Main Functions
+  desc: Core functions for searching and downloading data
+  contents:
+  - peruopen
+  - po_catalog
+  - po_search
+  - po_get
+  - po_explore
+
+- title: Helper Functions
+  desc: Support functions for data discovery and metadata
+  contents:
+  - po_list_datasets
+  - po_list_organizations
+  - po_list_resources
+  - po_get_dataset_metadata
+  - po_get_resource_metadata
+  - po_download_resource
+  - po_load_resource
+  - po_catalog_rebuild
+  - po_get_complete_metadata_nested
+  - po_get_dataset_count
+  - po_get_resource_url
+  - po_get_structured_metadata
+  - po_search_datasets
+  - po_search_datasets_paginated
+
+- title: Cache Management
+  desc: Functions for managing cached data
+  contents:
+  - cache_info
+  - clear_cache
+
+- title: Print Methods
+  desc: Print methods for package objects
+  contents:
+  - print.po_search_result
+  - print.po_explore_result
+
+articles:
+- title: Getting Started
+  navbar: ~
+  contents:
+  - getting-started
+
+format:
+  html:
+    toc: true
+
+development:
+  mode: auto
+  
+authors:
+  Your Name:
+    href: https://github.com/yourusername

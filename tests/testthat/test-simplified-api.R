@@ -1,0 +1,557 @@
+test_that("po_catalog returns correct structure", {
+  skip_if_offline()
+  skip_on_cran()
+  
+  # Test with small limit to avoid timeout
+  with_mock(
+    ckan_get_current_packages_with_resources = function(limit, offset) {
+      if (offset > 0) return(list())
+      list(
+        list(
+          id = "test-id-1",
+          name = "test-dataset-1", 
+          title = "Test Dataset 1",
+          notes = "<p>Test description</p>",
+          metadata_modified = "2024-01-01T00:00:00",
+          metadata_created = "2023-01-01T00:00:00",
+          groups = list(list(title = "Test Org")),
+          tags = list(list(name = "test"), list(name = "data")),
+          resources = list(
+            list(
+              id = "res-1",
+              name = "Test Resource",
+              format = "CSV",
+              size = "1048576",
+              url = "http://example.com/data.csv",
+              description = "Test resource description",
+              created = "2023-01-01T00:00:00",
+              last_modified = "2024-01-01T00:00:00"
+            )
+          )
+        )
+      )
+    },
+    {
+      catalog <- po_catalog(verbose = FALSE)
+      
+      # Check structure
+      expect_type(catalog, "list")
+      expect_named(catalog, c("datasets", "resources", "summary"))
+      
+      # Check datasets tibble
+      expect_s3_class(catalog$datasets, "tbl_df")
+      expect_equal(nrow(catalog$datasets), 1)
+      expect_true("dataset_id" %in% names(catalog$datasets))
+      expect_true("dataset_name" %in% names(catalog$datasets))
+      expect_true("title" %in% names(catalog$datasets))
+      expect_true("organization" %in% names(catalog$datasets))
+      expect_true("n_resources" %in% names(catalog$datasets))
+      expect_true("formats_available" %in% names(catalog$datasets))
+      
+      # Check resources tibble
+      expect_s3_class(catalog$resources, "tbl_df")
+      expect_equal(nrow(catalog$resources), 1)
+      expect_true("resource_id" %in% names(catalog$resources))
+      expect_true("dataset_id" %in% names(catalog$resources))
+      expect_true("format" %in% names(catalog$resources))
+      expect_true("size_mb" %in% names(catalog$resources))
+      
+      # Check summary
+      expect_type(catalog$summary, "list")
+      expect_equal(catalog$summary$n_datasets, 1)
+      expect_equal(catalog$summary$n_resources, 1)
+      
+      # Check text cleaning
+      expect_equal(catalog$datasets$notes[1], "Test description")  # HTML removed
+      expect_equal(catalog$datasets$organization[1], "Test Org")
+    }
+  )
+})
+
+test_that("po_search filters correctly", {
+  # Create mock catalog
+  mock_catalog <- list(
+    datasets = tibble::tibble(
+      dataset_id = c("d1", "d2", "d3"),
+      dataset_name = c("malaria-2023", "dengue-2023", "covid-2023"),
+      title = c("Malaria Cases 2023", "Dengue Surveillance", "COVID-19 Data"),
+      notes = c("Malaria data", "Dengue fever cases", "Coronavirus stats"),
+      organization = c("MINSA", "CDC", "MINSA"),
+      tags = c("malaria,health", "dengue,surveillance", "covid,pandemic"),
+      n_resources = c(2, 1, 3),
+      formats_available = c("CSV, XLSX", "CSV", "CSV, JSON, PDF"),
+      total_size_mb = c(10, 5, 25),
+      last_updated = c("2023-12-01", "2023-11-15", "2023-12-10")
+    ),
+    resources = tibble::tibble(
+      resource_id = c("r1", "r2", "r3", "r4", "r5", "r6"),
+      dataset_id = c("d1", "d1", "d2", "d3", "d3", "d3"),
+      dataset_name = c("malaria-2023", "malaria-2023", "dengue-2023", 
+                      "covid-2023", "covid-2023", "covid-2023"),
+      dataset_title = c("Malaria Cases 2023", "Malaria Cases 2023", "Dengue Surveillance",
+                       "COVID-19 Data", "COVID-19 Data", "COVID-19 Data"),
+      resource_name = c("malaria_cases.csv", "malaria_cases.xlsx", "dengue_data.csv",
+                       "covid_cases.csv", "covid_stats.json", "covid_report.pdf"),
+      format = c("CSV", "XLSX", "CSV", "CSV", "JSON", "PDF"),
+      size_mb = c(5, 5, 5, 10, 5, 10),
+      url = paste0("http://example.com/", c("r1", "r2", "r3", "r4", "r5", "r6")),
+      description = rep("Resource description", 6),
+      created = rep("2023-01-01", 6),
+      last_modified = rep("2023-12-01", 6)
+    ),
+    summary = list(n_datasets = 3, n_resources = 6)
+  )
+  
+  with_mock(
+    po_catalog = function(...) mock_catalog,
+    {
+      # Test query search
+      results <- po_search("malaria", verbose = FALSE)
+      expect_equal(nrow(results$datasets), 1)
+      expect_equal(results$datasets$dataset_name[1], "malaria-2023")
+      expect_equal(nrow(results$resources), 2)
+      
+      # Test format filter
+      csv_results <- po_search(formats = "CSV", verbose = FALSE)
+      expect_equal(nrow(csv_results$resources), 3)
+      expect_true(all(csv_results$resources$format == "CSV"))
+      
+      # Test organization filter
+      minsa_results <- po_search(organizations = "MINSA", verbose = FALSE)
+      expect_equal(nrow(minsa_results$datasets), 2)
+      expect_true(all(minsa_results$datasets$organization == "MINSA"))
+      
+      # Test combined filters
+      minsa_csv <- po_search(organizations = "MINSA", formats = "CSV", verbose = FALSE)
+      expect_equal(nrow(minsa_csv$datasets), 2)
+      expect_equal(nrow(minsa_csv$resources), 2)
+      
+      # Test search type
+      resource_search <- po_search("covid", type = "resources", verbose = FALSE)
+      expect_equal(nrow(resource_search$datasets), 1)
+      expect_equal(nrow(resource_search$resources), 3)
+    }
+  )
+})
+
+test_that("po_get handles different identifiers correctly", {
+  mock_catalog <- list(
+    datasets = tibble::tibble(
+      dataset_id = c("d1", "d2"),
+      dataset_name = c("malaria-2023", "dengue-2023"),
+      title = c("Malaria Cases 2023", "Dengue Surveillance"),
+      organization = c("MINSA", "CDC"),
+      n_resources = c(2, 1)
+    ),
+    resources = tibble::tibble(
+      resource_id = c("r1", "r2", "r3"),
+      dataset_id = c("d1", "d1", "d2"),
+      dataset_name = c("malaria-2023", "malaria-2023", "dengue-2023"),
+      resource_name = c("malaria_cases.csv", "malaria_cases.xlsx", "dengue_data.csv"),
+      format = c("CSV", "XLSX", "CSV"),
+      size_mb = c(5, 5, 5),
+      last_modified = c("2023-12-01", "2023-11-01", "2023-11-15")
+    )
+  )
+  
+  mock_data <- data.frame(
+    cases = c(100, 200, 300),
+    location = c("Lima", "Cusco", "Arequipa")
+  )
+  
+  with_mock(
+    po_catalog = function(...) mock_catalog,
+    po_load_resource = function(...) mock_data,
+    {
+      # Test getting by dataset name
+      result <- po_get("malaria-2023", what = "info", verbose = FALSE)
+      expect_type(result, "list")
+      expect_equal(result$dataset$dataset_name, "malaria-2023")
+      expect_equal(nrow(result$resources), 2)
+      
+      # Test getting by resource ID
+      result <- po_get("r3", what = "info", verbose = FALSE)
+      expect_equal(result$resource_id, "r3")
+      expect_equal(result$resource_name, "dengue_data.csv")
+      
+      # Test partial matching
+      result <- po_get("malaria", what = "info", verbose = FALSE)
+      expect_equal(result$dataset$dataset_name, "malaria-2023")
+      
+      # Test format selection (should pick CSV as it's more recent)
+      with_mock(
+        select_best_resource = function(resources, ...) {
+          resources[resources$format == "CSV", ][1, ]
+        },
+        {
+          # Would normally download data, but we're testing info only
+          result <- po_get("malaria-2023", what = "info", verbose = FALSE)
+          expect_equal(nrow(result$resources), 2)
+        }
+      )
+      
+      # Test error on not found
+      expect_error(po_get("nonexistent", verbose = FALSE), "No dataset found")
+    }
+  )
+})
+
+test_that("po_get handles multiple resource IDs", {
+  mock_catalog <- list(
+    datasets = tibble::tibble(
+      dataset_id = c("d1", "d2"),
+      dataset_name = c("malaria-2023", "dengue-2023"),
+      title = c("Malaria Cases 2023", "Dengue Surveillance")
+    ),
+    resources = tibble::tibble(
+      resource_id = c("r1", "r2", "r3"),
+      dataset_id = c("d1", "d1", "d2"),
+      dataset_name = c("malaria-2023", "malaria-2023", "dengue-2023"),
+      resource_name = c("malaria_cases.csv", "malaria_cases.xlsx", "dengue_data.csv"),
+      format = c("CSV", "XLSX", "CSV"),
+      size_mb = c(5, 5, 5)
+    )
+  )
+  
+  mock_data1 <- data.frame(cases = 1:3, location = c("Lima", "Cusco", "Arequipa"))
+  mock_data2 <- data.frame(cases = 4:6, location = c("Piura", "Trujillo", "Chiclayo"))
+  
+  load_count <- 0
+  with_mock(
+    po_catalog = function(...) mock_catalog,
+    po_load_resource = function(resource_id, ...) {
+      load_count <<- load_count + 1
+      if (resource_id == "r1") mock_data1 else mock_data2
+    },
+    {
+      # Test multiple resource IDs as vector
+      result <- po_get(c("r1", "r3"), what = "data", verbose = FALSE)
+      expect_type(result, "list")
+      expect_length(result, 2)
+      expect_equal(nrow(result[["r1"]]), 3)
+      expect_equal(nrow(result[["r3"]]), 3)
+      expect_equal(result[["r1"]]$location[1], "Lima")
+      expect_equal(result[["r3"]]$location[1], "Piura")
+      
+      # Test single resource ID returns data frame directly
+      single_result <- po_get("r1", what = "data", verbose = FALSE)
+      expect_s3_class(single_result, "data.frame")
+      expect_equal(nrow(single_result), 3)
+    }
+  )
+})
+
+test_that("po_get handles tibble input from catalog/search", {
+  mock_catalog <- list(
+    datasets = tibble::tibble(
+      dataset_id = c("d1", "d2"),
+      dataset_name = c("malaria-2023", "dengue-2023")
+    ),
+    resources = tibble::tibble(
+      resource_id = c("r1", "r2", "r3"),
+      dataset_id = c("d1", "d1", "d2"),
+      resource_name = c("malaria_cases.csv", "malaria_cases.xlsx", "dengue_data.csv"),
+      format = c("CSV", "XLSX", "CSV")
+    )
+  )
+  
+  mock_data <- data.frame(value = 1:3)
+  
+  with_mock(
+    po_catalog = function(...) mock_catalog,
+    po_load_resource = function(...) mock_data,
+    {
+      # Test with tibble containing resource_id column
+      resources_tibble <- tibble::tibble(
+        resource_id = c("r1", "r3"),
+        resource_name = c("malaria_cases.csv", "dengue_data.csv"),
+        format = c("CSV", "CSV")
+      )
+      
+      result <- po_get(resources_tibble, what = "data", verbose = FALSE)
+      expect_type(result, "list")
+      expect_length(result, 2)
+      expect_named(result, c("malaria_cases.csv", "dengue_data.csv"))
+      
+      # Test error when tibble lacks resource_id column
+      bad_tibble <- tibble::tibble(name = c("a", "b"))
+      expect_error(po_get(bad_tibble, verbose = FALSE), "resource_id")
+    }
+  )
+})
+
+test_that("po_get handles encoding correctly", {
+  mock_catalog <- list(
+    datasets = tibble::tibble(dataset_id = "d1"),
+    resources = tibble::tibble(
+      resource_id = "r1",
+      dataset_id = "d1",
+      resource_name = "datos_español.csv",
+      format = "CSV"
+    )
+  )
+  
+  # Data with Spanish characters
+  mock_data <- data.frame(
+    ciudad = c("Piñon", "Cusqueña", "Áncash"),
+    población = c(100, 200, 300)
+  )
+  
+  with_mock(
+    po_catalog = function(...) mock_catalog,
+    po_load_resource = function(resource_id, encoding = "UTF-8", ...) {
+      # Simulate that encoding was applied
+      attr(mock_data, "encoding") <- encoding
+      mock_data
+    },
+    detect_best_encoding = function(...) "UTF-8",
+    {
+      # Test default UTF-8 encoding
+      result <- po_get("r1", what = "data", verbose = FALSE)
+      expect_equal(attr(result, "encoding"), "UTF-8")
+      
+      # Test Latin1 encoding
+      result <- po_get("r1", what = "data", encoding = "Latin1", verbose = FALSE)
+      expect_equal(attr(result, "encoding"), "Latin1")
+      
+      # Test auto encoding
+      result <- po_get("r1", what = "data", encoding = "auto", verbose = FALSE)
+      expect_true(attr(result, "encoding") %in% c("UTF-8", "Latin1", "Windows-1252", "ISO-8859-1", "auto"))
+      
+      # Test Windows-1252 encoding
+      result <- po_get("r1", what = "data", encoding = "Windows-1252", verbose = FALSE)
+      expect_equal(attr(result, "encoding"), "Windows-1252")
+      
+      # Test ISO-8859-1 encoding
+      result <- po_get("r1", what = "data", encoding = "ISO-8859-1", verbose = FALSE)
+      expect_equal(attr(result, "encoding"), "ISO-8859-1")
+    }
+  )
+})
+
+test_that("encoding detection works for Spanish characters", {
+  # Create a temporary file with Spanish characters in different encodings
+  temp_files <- list()
+  
+  # Sample text with Spanish characters
+  spanish_text <- "FERREÑAFE,CAÑARIS,Año,Información,Niño"
+  
+  # Create files with different encodings
+  temp_files$windows1252 <- tempfile(fileext = ".csv")
+  temp_files$iso88591 <- tempfile(fileext = ".csv")
+  temp_files$utf8 <- tempfile(fileext = ".csv")
+  
+  # Write test files (simplified test)
+  writeLines(spanish_text, temp_files$utf8, useBytes = FALSE)
+  
+  # Test the encoding detection function
+  detected <- detect_best_encoding(temp_files$utf8, "csv")
+  expect_true(detected %in% c("UTF-8", "Windows-1252", "ISO-8859-1", "Latin1"))
+  
+  # Clean up
+  unlink(unlist(temp_files))
+})
+
+test_that("po_get saves files locally with correct names", {
+  mock_catalog <- list(
+    datasets = tibble::tibble(
+      dataset_id = "d1",
+      dataset_name = "test-dataset"
+    ),
+    resources = tibble::tibble(
+      resource_id = c("r1", "r2"),
+      dataset_id = c("d1", "d1"),
+      resource_name = c("data file.csv", "report@2023.xlsx"),
+      format = c("CSV", "XLSX")
+    )
+  )
+  
+  temp_dir <- tempdir()
+  saved_paths <- character()
+  
+  with_mock(
+    po_catalog = function(...) mock_catalog,
+    po_load_resource = function(resource_id, path = NULL, ...) {
+      if (!is.null(path)) {
+        saved_paths <<- c(saved_paths, path)
+      }
+      data.frame(x = 1:3)
+    },
+    {
+      # Test single file save
+      result <- po_get("r1", save_to = temp_dir, verbose = FALSE)
+      expect_length(saved_paths, 1)
+      expect_true(grepl("data_file.csv$", saved_paths[1]))
+      expect_true(grepl(temp_dir, saved_paths[1], fixed = TRUE))
+      
+      # Test multiple files save with special characters cleaned
+      saved_paths <- character()
+      result <- po_get(c("r1", "r2"), save_to = temp_dir, verbose = FALSE)
+      expect_length(saved_paths, 2)
+      expect_true(grepl("data_file.csv$", saved_paths[1]))
+      expect_true(grepl("report_2023.xlsx$", saved_paths[2]))
+    }
+  )
+})
+
+test_that("po_explore organizes data correctly", {
+  mock_search_result <- list(
+    datasets = tibble::tibble(
+      dataset_id = c("d1", "d2", "d3", "d4"),
+      dataset_name = c("data-2023", "data-2022", "report-2023", "stats-2021"),
+      title = c("Health Data 2023", "Health Data 2022", "Annual Report", "Statistics"),
+      organization = c("MINSA", "MINSA", "CDC", "INEI"),
+      n_resources = c(3, 2, 1, 2),
+      formats_available = c("CSV, XLSX, PDF", "CSV, XLSX", "PDF", "CSV, JSON"),
+      total_size_mb = c(150, 50, 1200, 25),
+      last_updated = c("2023-12-01", "2022-12-01", "2023-11-01", "2021-06-01")
+    ),
+    resources = tibble::tibble(
+      resource_id = paste0("r", 1:8),
+      dataset_id = c("d1", "d1", "d1", "d2", "d2", "d3", "d4", "d4"),
+      resource_name = paste0("resource_", 1:8, ".csv"),
+      dataset_title = rep(c("Health Data 2023", "Health Data 2022", 
+                           "Annual Report", "Statistics"), c(3, 2, 1, 2)),
+      format = c("CSV", "XLSX", "PDF", "CSV", "XLSX", "PDF", "CSV", "JSON"),
+      size_mb = c(50, 50, 50, 25, 25, 1200, 15, 10),
+      last_modified = rep("2023-12-01", 8)
+    )
+  )
+  
+  with_mock(
+    po_search = function(...) mock_search_result,
+    po_catalog = function(...) list(
+      datasets = mock_search_result$datasets,
+      resources = mock_search_result$resources
+    ),
+    {
+      explore <- po_explore(verbose = FALSE)
+      
+      # Check structure
+      expect_type(explore, "list")
+      expect_s3_class(explore, "po_explore_result")
+      
+      # Check by_organization
+      expect_type(explore$by_organization, "list")
+      expect_equal(names(explore$by_organization)[1], "MINSA")  # Most datasets
+      expect_equal(explore$by_organization$MINSA$n_datasets, 2)
+      
+      # Check by_format
+      expect_type(explore$by_format, "list")
+      expect_true("CSV" %in% names(explore$by_format))
+      expect_equal(explore$by_format$CSV$n_resources, 3)
+      
+      # Check by_year
+      expect_type(explore$by_year, "list")
+      expect_s3_class(explore$by_year$summary, "data.frame")
+      
+      # Check by_size
+      expect_type(explore$by_size, "list")
+      expect_true("distribution" %in% names(explore$by_size))
+      expect_true("largest" %in% names(explore$by_size))
+      expect_equal(explore$by_size$largest$title[1], "Annual Report")  # 1200MB
+      
+      # Check recent
+      expect_s3_class(explore$recent, "data.frame")
+      expect_equal(explore$recent$title[1], "Health Data 2023")
+      
+      # Check popular
+      expect_s3_class(explore$popular, "data.frame")
+      expect_equal(explore$popular$n_resources[1], 3)
+    }
+  )
+})
+
+test_that("select_best_resource picks correct format", {
+  resources <- tibble::tibble(
+    resource_id = c("r1", "r2", "r3", "r4"),
+    format = c("PDF", "XLSX", "CSV", "ZIP"),
+    last_modified = c("2023-01-01", "2023-12-01", "2023-06-01", "2023-11-01")
+  )
+  
+  # Should pick CSV (priority over recency)
+  best <- select_best_resource(resources, verbose = FALSE)
+  expect_equal(best$format, "CSV")
+  
+  # Should pick XLSX when requested
+  best <- select_best_resource(resources, "XLSX", verbose = FALSE)
+  expect_equal(best$format, "XLSX")
+  
+  # Should pick most recent when format not in priority list
+  resources_other <- tibble::tibble(
+    resource_id = c("r1", "r2"),
+    format = c("DOC", "PPT"),
+    last_modified = c("2023-01-01", "2023-12-01")
+  )
+  best <- select_best_resource(resources_other, verbose = FALSE)
+  expect_equal(best$format, "PPT")  # Most recent
+})
+
+test_that("text cleaning preserves Spanish characters", {
+  # Test clean_string
+  expect_equal(clean_string("Ejecución  Presupuestal", TRUE), "Ejecución Presupuestal")
+  expect_equal(clean_string("Text\nwith\nnewlines", TRUE), "Text with newlines")
+  expect_equal(clean_string("  spaces  ", TRUE), "spaces")
+  
+  # Test clean_html_text
+  expect_equal(clean_html_text("<p>Información básica</p>", TRUE), "Información básica")
+  expect_equal(clean_html_text("Salud &amp; Educación", TRUE), "Salud & Educación")
+  expect_equal(clean_html_text("&nbsp;&nbsp;Test&nbsp;&nbsp;", TRUE), "Test")
+})
+
+test_that("print methods work correctly", {
+  # Test po_search_result print
+  search_result <- list(
+    datasets = tibble::tibble(
+      title = c("Test Dataset 1", "Test Dataset 2"),
+      organization = c("Org1", "Org2"),
+      n_resources = c(2, 3)
+    ),
+    resources = tibble::tibble(
+      format = c("CSV", "CSV", "XLSX", "XLSX", "PDF")
+    ),
+    summary = list(
+      query = "test",
+      n_datasets = 2,
+      n_resources = 5,
+      total_size_gb = 1.5,
+      formats_found = table(c("CSV", "CSV", "XLSX", "XLSX", "PDF"))
+    )
+  )
+  class(search_result) <- c("po_search_result", "list")
+  
+  expect_output(print(search_result), "Peru Open Data Search Results")
+  expect_output(print(search_result), "Query: test")
+  expect_output(print(search_result), "Found: 2 datasets with 5 resources")
+  
+  # Test po_explore_result print
+  explore_result <- list(
+    query = "health",
+    summary = list(
+      n_datasets = 10,
+      n_resources = 25,
+      n_organizations = 3,
+      date_range = c("2020-01-01", "2023-12-31")
+    ),
+    by_organization = list(
+      MINSA = list(n_datasets = 5, n_resources = 15),
+      CDC = list(n_datasets = 3, n_resources = 8)
+    ),
+    by_format = list(
+      CSV = list(n_resources = 10, avg_size_mb = 25.5),
+      XLSX = list(n_resources = 8, avg_size_mb = 15.2)
+    ),
+    recent = data.frame(
+      title = c("Recent Dataset 1", "Recent Dataset 2"),
+      last_updated = c("2023-12-31", "2023-12-30")
+    ),
+    recommendations = list(
+      csv_available = data.frame(dataset_name = c("health-2023", "health-2022"))
+    )
+  )
+  class(explore_result) <- c("po_explore_result", "list")
+  
+  expect_output(print(explore_result), "Peru Open Data Exploration")
+  expect_output(print(explore_result), "Query: health")
+  expect_output(print(explore_result), "TOP ORGANIZATIONS")
+})

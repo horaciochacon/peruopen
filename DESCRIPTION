@@ -1,0 +1,40 @@
+Package: peruopen
+Type: Package
+Title: Access Peru's Open Data Portal (CKAN)
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Your", "Name", , "your.email@example.com", role = c("aut", "cre"))
+  )
+Description: Provides a comprehensive interface to Peru's CKAN data portal 
+    (datosabiertos.gob.pe), enabling users to query and search datasets, 
+    extract metadata, and download resources directly into R.
+License: MIT + file LICENSE
+URL: https://github.com/yourusername/peruopen
+BugReports: https://github.com/yourusername/peruopen/issues
+Depends: 
+    R (>= 4.1.0)
+Imports:
+    httr2,
+    jsonlite,
+    readr,
+    readxl,
+    tibble,
+    dplyr,
+    rlang,
+    cli,
+    fs,
+    memoise,
+    rappdirs
+Suggests: 
+    testthat (>= 3.0.0),
+    mockery,
+    vcr,
+    knitr,
+    rmarkdown,
+    quarto
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+VignetteBuilder: knitr

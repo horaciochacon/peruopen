@@ -1,0 +1,39 @@
+# Test the enhanced encoding fix
+library(peruopen)
+
+# Enable encoding debug mode to see detailed detection results (optional)
+# options(peruopen.encoding.debug = TRUE)
+
+cat("=== Testing Enhanced Encoding Detection and Fixes ===\n")
+
+# Test the specific case with your CDC data
+cat("\nNow try with your CDC data:\n")
+cat("# Optional: enable detailed encoding debug\n")
+cat("# options(peruopen.encoding.debug = TRUE)\n")
+cat("data_auto <- po_get(cdc$resources[1,], encoding = 'auto')\n")
+cat("data_auto$provincia[4]  # Should now show 'FERREÑAFE'\n\n")
+
+cat("The enhanced system now:\n")
+cat("1. Tests multiple encodings with detailed scoring\n")
+cat("2. Looks specifically for Spanish place names\n") 
+cat("3. Post-processes results to fix common mojibake patterns\n")
+cat("4. Converts both 'FERRE�AFE' and 'FERREï¿½AFE' to 'FERREÑAFE'\n\n")
+
+cat("If auto-detection still fails, the post-processing should fix it!\n")
+
+# Test the fix function directly
+cat("\n=== Testing Post-Processing Fix ===\n")
+test_data <- data.frame(
+  provincia = c("LIMA", "FERRE�AFE", "FERREï¿½AFE", "CA�ARIS"),
+  distrito = c("LIMA", "FERRE�AFE", "FERREï¿½AFE", "CAï¿½ARIS"),
+  stringsAsFactors = FALSE
+)
+
+cat("Before fix:\n")
+print(test_data)
+
+fixed_data <- fix_encoding_issues(test_data)
+cat("\nAfter fix:\n")
+print(fixed_data)
+
+cat("\n=== Ready to test! ===\n")
