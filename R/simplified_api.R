@@ -1017,7 +1017,7 @@ process_multiple_resources <- function(resource_ids, resource_names, what, clean
   }
   
   if (verbose && n_resources > 1) {
-    successful <- sum(!sapply(results, function(x) !is.null(x$error)))
+    successful <- sum(sapply(results, function(x) is.null(x[["error"]])))
     message("\nCompleted: ", successful, "/", n_resources, " resources loaded successfully")
   }
   
