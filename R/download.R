@@ -108,7 +108,7 @@ po_load_resource <- function(resource_id, format = NULL, clean_names = TRUE,
         result
       } else {
         # Use readr for UTF-8
-        readr::read_csv(file_path, locale = readr::locale(encoding = encoding_to_use), ...)
+        readr::read_csv(file_path, locale = readr::locale(encoding = encoding_to_use), show_col_types = FALSE, ...)
       }
     } else if (format_lower %in% c("xlsx", "xls", "excel")) {
       readxl::read_excel(file_path, ...)
