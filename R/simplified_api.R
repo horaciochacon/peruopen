@@ -323,7 +323,13 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
       # Calculate total size
       sizes <- sapply(resources, function(r) {
         size <- r$size %||% 0
-        if (is.character(size)) size <- as.numeric(size)
+        # Parse formatted size strings like "26.96 MB", "1.5 KB", etc.
+        if (is.character(size)) {
+          size <- parse_formatted_size(size)
+        } else if (is.numeric(size)) {
+          # If already numeric, assume it's bytes
+          size <- as.numeric(size)
+        }
         if (is.na(size)) size <- 0
         size
       })
@@ -360,7 +366,12 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
         
         # Calculate size in MB
         size_bytes <- res$size %||% 0
-        if (is.character(size_bytes)) size_bytes <- as.numeric(size_bytes)
+        # Parse formatted size strings like "26.96 MB", "1.5 KB", etc.
+        if (is.character(size_bytes)) {
+          size_bytes <- parse_formatted_size(size_bytes)
+        } else if (is.numeric(size_bytes)) {
+          size_bytes <- as.numeric(size_bytes)
+        }
         if (is.na(size_bytes)) size_bytes <- 0
         size_mb <- round(size_bytes / 1024 / 1024, 2)
         
@@ -385,6 +396,10 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
   # Convert to tibbles
   datasets <- dplyr::bind_rows(datasets_list)
   resources <- dplyr::bind_rows(unlist(resources_list, recursive = FALSE))
+  
+  # Add custom classes for pretty printing
+  class(datasets) <- c("po_datasets", class(datasets))
+  class(resources) <- c("po_resources", class(resources))
   
   # Calculate summary statistics
   summary <- list(
@@ -549,6 +564,10 @@ po_search <- function(query = NULL,
         size_mb = numeric(0)
       )
       
+      # Add custom classes for pretty printing
+      class(simple_result) <- c("po_datasets", class(simple_result))
+      class(resources) <- c("po_resources", class(resources))
+      
       result <- list(
         datasets = simple_result,
         resources = resources,
@@ -660,6 +679,10 @@ po_search <- function(query = NULL,
   } else {
     "(all data)"
   }
+  
+  # Add custom classes for pretty printing
+  class(datasets) <- c("po_datasets", class(datasets))
+  class(resources) <- c("po_resources", class(resources))
   
   summary <- list(
     query = search_description,
@@ -1273,4 +1296,184 @@ print.po_explore_result <- function(x, ...) {
   
   cat("\nExplore further with: $by_organization, $by_format, $recent, $popular\n")
   invisible(x)
+}
+
+# Helper function to wrap text with proper indentation
+wrap_text <- function(text, prefix = "", width = 80, indent = 3) {
+  if (is.na(text) || text == "") return("")
+  
+  # Calculate available width after prefix and indentation
+  available_width <- width - nchar(prefix) - indent
+  
+  # Split text into words
+  words <- strsplit(text, "\\s+")[[1]]
+  if (length(words) == 0) return("")
+  
+  lines <- character()
+  current_line <- character()
+  current_length <- 0
+  
+  for (word in words) {
+    # Check if adding this word would exceed the width
+    word_length <- nchar(word)
+    space_needed <- if (length(current_line) == 0) word_length else word_length + 1
+    
+    if (current_length + space_needed <= available_width) {
+      # Add word to current line
+      current_line <- c(current_line, word)
+      current_length <- current_length + space_needed
+    } else {
+      # Start new line
+      if (length(current_line) > 0) {
+        lines <- c(lines, paste(current_line, collapse = " "))
+      }
+      current_line <- word
+      current_length <- word_length
+    }
+  }
+  
+  # Add the last line
+  if (length(current_line) > 0) {
+    lines <- c(lines, paste(current_line, collapse = " "))
+  }
+  
+  # Format with proper indentation
+  if (length(lines) == 0) return("")
+  
+  # First line with prefix
+  result <- paste0(prefix, lines[1])
+  
+  # Additional lines with indentation
+  if (length(lines) > 1) {
+    indent_str <- paste(rep(" ", nchar(prefix) + indent), collapse = "")
+    for (i in 2:length(lines)) {
+      result <- paste0(result, "\n", indent_str, lines[i])
+    }
+  }
+  
+  return(result)
+}
+
+#' Print method for datasets tibbles
+#' @export
+print.po_datasets <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
+  n_total <- nrow(x)
+  n_show <- min(max_items, n_total)
+  
+  cat("Peru Open Data - Datasets (", n_total, " total)\n", sep = "")
+  cat(paste(rep("═", 40), collapse = ""), "\n\n")
+  
+  if (n_total == 0) {
+    cat("No datasets found.\n")
+    return(invisible(x))
+  }
+  
+  for (i in 1:n_show) {
+    row <- x[i, ]
+    
+    cat(sprintf("%d. %s\n", i, row$title))
+    
+    # Organization info
+    org_text <- if (is.na(row$organization) || row$organization == "") "[Unknown]" else row$organization
+    
+    # Size info
+    size_text <- if (is.na(row$total_size_mb)) "[Unknown]" else if (row$total_size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$total_size_mb)
+    
+    # Format info  
+    formats_text <- if (is.na(row$formats_available) || row$formats_available == "") "[Unknown]" else row$formats_available
+    
+    cat(sprintf("   Organization: %s | Resources: %d (%s) | Size: %s\n",
+                org_text, row$n_resources, formats_text, size_text))
+    
+    # Date info
+    updated_text <- if (is.na(row$last_updated)) "[Unknown]" else row$last_updated
+    created_text <- if (is.na(row$created)) "[Unknown]" else row$created
+    
+    cat(sprintf("   Last updated: %s | Created: %s\n", updated_text, created_text))
+    
+    # Notes (wrapped with proper indentation)
+    if (!is.na(row$notes) && row$notes != "") {
+      notes_text <- if (nchar(row$notes) > 400) paste0(substr(row$notes, 1, 397), "...") else row$notes
+      notes_formatted <- wrap_text(notes_text, "   Notes: ", width = 90, indent = 0)
+      cat(notes_formatted, "\n")
+    }
+    
+    if (i < n_show) cat("\n")
+  }
+  
+  if (n_total > n_show) {
+    cat(sprintf("\n... (showing %d of %d datasets)\n", n_show, n_total))
+  }
+  
+  cat("\nAccess individual datasets: x[1], x[2], etc. | Full tibble: as_tibble(x)\n")
+  invisible(x)
+}
+
+#' Print method for resources tibbles  
+#' @export
+print.po_resources <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
+  n_total <- nrow(x)
+  n_show <- min(max_items, n_total)
+  
+  cat("Peru Open Data - Resources (", n_total, " total)\n", sep = "")
+  cat(paste(rep("═", 42), collapse = ""), "\n\n")
+  
+  if (n_total == 0) {
+    cat("No resources found.\n")
+    return(invisible(x))
+  }
+  
+  for (i in 1:n_show) {
+    row <- x[i, ]
+    
+    # Resource name and size
+    size_text <- if (is.na(row$size_mb)) "[Unknown]" else if (row$size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$size_mb)
+    cat(sprintf("%d. %s (%s)\n", i, row$resource_name, size_text))
+    
+    # Dataset info
+    cat(sprintf("   Dataset: %s\n", row$dataset_title))
+    
+    # Format and date info
+    format_text <- if (is.na(row$format)) "[Unknown]" else toupper(row$format)
+    modified_text <- if (is.na(row$last_modified)) "[Unknown]" else row$last_modified
+    
+    cat(sprintf("   Format: %s | Last modified: %s\n", format_text, modified_text))
+    
+    # URL (wrapped with proper indentation)
+    if (!is.na(row$url) && row$url != "") {
+      url_text <- if (nchar(row$url) > 300) paste0(substr(row$url, 1, 297), "...") else row$url
+      url_formatted <- wrap_text(url_text, "   URL: ", width = 90, indent = 0)
+      cat(url_formatted, "\n")
+    }
+    
+    # Description (wrapped with proper indentation)
+    if (!is.na(row$description) && row$description != "" && row$description != "Resource description") {
+      desc_text <- if (nchar(row$description) > 400) paste0(substr(row$description, 1, 397), "...") else row$description
+      desc_formatted <- wrap_text(desc_text, "   Description: ", width = 90, indent = 0)
+      cat(desc_formatted, "\n")
+    }
+    
+    if (i < n_show) cat("\n")
+  }
+  
+  if (n_total > n_show) {
+    cat(sprintf("\n... (showing %d of %d resources)\n", n_show, n_total))
+  }
+  
+  cat("\nAccess individual resources: x[1], x[2], etc. | Full tibble: as_tibble(x)\n")
+  invisible(x)
+}
+
+#' Convert po_datasets back to regular tibble
+#' @export
+as_tibble.po_datasets <- function(x, ...) {
+  class(x) <- class(x)[!class(x) %in% "po_datasets"]
+  x
+}
+
+#' Convert po_resources back to regular tibble  
+#' @export
+as_tibble.po_resources <- function(x, ...) {
+  class(x) <- class(x)[!class(x) %in% "po_resources"]
+  x
 }

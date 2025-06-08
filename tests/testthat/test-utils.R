@@ -35,3 +35,29 @@ test_that("filter_resources_by_format works", {
   multi_filtered <- filter_resources_by_format(sample_resources, c("csv", "json"))
   expect_equal(nrow(multi_filtered), 2)
 })
+
+test_that("parse_formatted_size correctly parses size strings", {
+  # Test various size formats
+  expect_equal(parse_formatted_size("26.96 MB"), 28269609, tolerance = 1)
+  expect_equal(parse_formatted_size("1.5 KB"), 1536)
+  expect_equal(parse_formatted_size("500 B"), 500)
+  expect_equal(parse_formatted_size("2.3 GB"), 2469606195, tolerance = 1)
+  expect_equal(parse_formatted_size("0.8 TB"), 879609302221, tolerance = 1)
+  
+  # Test case insensitive
+  expect_equal(parse_formatted_size("26.96 mb"), 28269609, tolerance = 1)
+  expect_equal(parse_formatted_size("1.5 kb"), 1536)
+  
+  # Test edge cases
+  expect_equal(parse_formatted_size(""), 0)
+  expect_equal(parse_formatted_size(NA_character_), 0)
+  expect_equal(parse_formatted_size("invalid"), 0)
+  
+  # Test without space
+  expect_equal(parse_formatted_size("5MB"), 5242880)
+  expect_equal(parse_formatted_size("10KB"), 10240)
+  
+  # Test integer values
+  expect_equal(parse_formatted_size("1000"), 1000)  # bytes when no unit
+  expect_equal(parse_formatted_size("1000 B"), 1000)
+})

@@ -4,7 +4,10 @@
 \alias{clear_cache}
 \title{Clear package cache}
 \usage{
-clear_cache()
+clear_cache(type = c("all", "api", "catalog", "files"))
+}
+\arguments{
+\item{type}{Character. Type of cache to clear: "all" (default), "api", "catalog", or "files"}
 }
 \value{
 Invisible TRUE

@@ -3,6 +3,7 @@
 #' @param resource_id Character. The resource ID
 #' @param path Character. Local file path (optional, uses temp directory if NULL)
 #' @param overwrite Logical. Whether to overwrite existing files (default FALSE)
+#' @param use_cache Logical. Use cached files if available (default TRUE)
 #' @return Character path to downloaded file
 # Internal function - use po_get() instead
 #' @importFrom httr2 request req_user_agent req_timeout req_perform resp_body_raw
@@ -12,7 +13,7 @@
 #' @importFrom jsonlite fromJSON
 #' @importFrom rlang abort warn
 
-po_download_resource <- function(resource_id, path = NULL, overwrite = FALSE) {
+po_download_resource <- function(resource_id, path = NULL, overwrite = FALSE, use_cache = TRUE) {
   if (missing(resource_id) || is.null(resource_id) || resource_id == "") {
     rlang::abort("Resource ID is required", class = "po_input_error")
   }
@@ -23,12 +24,24 @@ po_download_resource <- function(resource_id, path = NULL, overwrite = FALSE) {
     rlang::abort("Resource has no download URL", class = "po_download_error")
   }
   
+  # Check cache first if enabled and no custom path specified
+  if (use_cache && is.null(path)) {
+    if (is_resource_cache_valid(resource_id, resource_meta)) {
+      cached_file <- get_cached_resource_file(resource_id, resource_meta$format)
+      if (!is.null(cached_file)) {
+        return(cached_file)
+      }
+    }
+  }
+  
+  # Determine target path
   if (is.null(path)) {
     file_ext <- if (!is.na(resource_meta$format)) {
       paste0(".", tolower(resource_meta$format))
     } else {
       ""
     }
+    # Use temp path for download, will cache afterwards
     path <- fs::path(fs::path_temp(), paste0("resource_", resource_id, file_ext))
   }
   
@@ -37,6 +50,7 @@ po_download_resource <- function(resource_id, path = NULL, overwrite = FALSE) {
     return(path)
   }
   
+  # Download the file
   tryCatch({
     req <- httr2::request(resource_meta$url) |>
       httr2::req_user_agent("peruopen R package") |>
@@ -50,7 +64,13 @@ po_download_resource <- function(resource_id, path = NULL, overwrite = FALSE) {
       rlang::abort("Failed to write downloaded file", class = "po_download_error")
     }
     
-    path
+    # Cache the file if using default temp path and caching is enabled
+    if (use_cache && fs::path_dir(path) == fs::path_temp()) {
+      cached_path <- cache_resource_file(resource_id, path, resource_meta)
+      return(cached_path)
+    }
+    
+    return(path)
     
   }, error = function(e) {
     rlang::abort(paste("Failed to download resource:", e$message), 
@@ -65,11 +85,12 @@ po_download_resource <- function(resource_id, path = NULL, overwrite = FALSE) {
 #' @param clean_names Logical. Clean column names for R compatibility (default TRUE)
 #' @param encoding Character. Encoding to use: "UTF-8", "Latin1", "Windows-1252", "ISO-8859-1", or "auto" (default "UTF-8")
 #' @param path Character. Custom save path for the downloaded file (optional)
+#' @param use_cache Logical. Use cached files if available (default TRUE)
 #' @param ... Additional arguments passed to reading functions
 #' @return Data frame or file path for unsupported formats
 # Internal function - use po_get() instead
 po_load_resource <- function(resource_id, format = NULL, clean_names = TRUE, 
-                           encoding = "UTF-8", path = NULL, ...) {
+                           encoding = "UTF-8", path = NULL, use_cache = TRUE, ...) {
   if (missing(resource_id) || is.null(resource_id) || resource_id == "") {
     rlang::abort("Resource ID is required", class = "po_input_error")
   }
@@ -84,7 +105,7 @@ po_load_resource <- function(resource_id, format = NULL, clean_names = TRUE,
     rlang::abort("Cannot determine resource format for loading", class = "po_load_error")
   }
   
-  file_path <- po_download_resource(resource_id, path = path)
+  file_path <- po_download_resource(resource_id, path = path, use_cache = use_cache)
   
   format_lower <- tolower(format)
   
@@ -278,4 +299,95 @@ po_get_resource_url <- function(resource_id) {
   
   resource_meta <- po_get_resource_metadata(resource_id)
   resource_meta$url
+}
+
+# Resource file caching functions
+get_resource_cache_dir <- function() {
+  cache_dir <- rappdirs::user_cache_dir("peruopen", "R")
+  resource_cache_dir <- file.path(cache_dir, "resources")
+  if (!dir.exists(resource_cache_dir)) {
+    dir.create(resource_cache_dir, recursive = TRUE)
+  }
+  return(resource_cache_dir)
+}
+
+get_cached_resource_path <- function(resource_id, format = NULL) {
+  cache_dir <- get_resource_cache_dir()
+  
+  if (!is.null(format) && format != "" && !is.na(format)) {
+    file_ext <- paste0(".", tolower(format))
+  } else {
+    file_ext <- ""
+  }
+  
+  cache_file <- file.path(cache_dir, paste0("resource_", resource_id, file_ext))
+  meta_file <- file.path(cache_dir, paste0("resource_", resource_id, ".meta"))
+  
+  list(
+    file = cache_file,
+    meta = meta_file
+  )
+}
+
+is_resource_cache_valid <- function(resource_id, resource_meta = NULL) {
+  cache_paths <- get_cached_resource_path(resource_id, resource_meta$format)
+  
+  if (!file.exists(cache_paths$file)) {
+    return(FALSE)
+  }
+  
+  if (file.exists(cache_paths$meta)) {
+    cached_meta <- readRDS(cache_paths$meta)
+    
+    if (!is.null(resource_meta) && !is.null(resource_meta$last_modified) && 
+        !is.na(resource_meta$last_modified) && resource_meta$last_modified != "") {
+      
+      cached_last_modified <- cached_meta$last_modified %||% ""
+      
+      if (cached_last_modified != resource_meta$last_modified) {
+        return(FALSE)
+      }
+    }
+    
+    if (!is.null(cached_meta$cached_at)) {
+      cache_age <- difftime(Sys.time(), cached_meta$cached_at, units = "hours")
+      if (cache_age > 24) {
+        return(FALSE)
+      }
+    }
+  } else {
+    cache_age <- difftime(Sys.time(), file.info(cache_paths$file)$mtime, units = "hours")
+    if (cache_age > 24) {
+      return(FALSE)
+    }
+  }
+  
+  return(TRUE)
+}
+
+cache_resource_file <- function(resource_id, source_path, resource_meta) {
+  cache_paths <- get_cached_resource_path(resource_id, resource_meta$format)
+  
+  if (file.copy(source_path, cache_paths$file, overwrite = TRUE)) {
+    meta_data <- list(
+      resource_id = resource_id,
+      format = resource_meta$format,
+      last_modified = resource_meta$last_modified,
+      url = resource_meta$url,
+      cached_at = Sys.time()
+    )
+    saveRDS(meta_data, cache_paths$meta)
+    return(cache_paths$file)
+  } else {
+    warning("Failed to cache resource file")
+    return(source_path)
+  }
+}
+
+get_cached_resource_file <- function(resource_id, format = NULL) {
+  cache_paths <- get_cached_resource_path(resource_id, format)
+  if (file.exists(cache_paths$file)) {
+    return(cache_paths$file)
+  }
+  return(NULL)
 }

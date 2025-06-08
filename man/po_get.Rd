@@ -11,6 +11,7 @@ po_get(
   clean_names = TRUE,
   save_to = NULL,
   encoding = c("UTF-8", "Latin1", "Windows-1252", "ISO-8859-1", "auto"),
+  use_cache = TRUE,
   verbose = TRUE
 )
 }
@@ -26,6 +27,8 @@ po_get(
 \item{save_to}{Directory path to save downloaded files (default NULL = no saving)}
 
 \item{encoding}{Character encoding: "UTF-8" (default), "Latin1", "Windows-1252", "ISO-8859-1", or "auto"}
+
+\item{use_cache}{Logical. Use cached files if available (default TRUE)}
 
 \item{verbose}{Logical. Show download progress (default TRUE)}
 }
@@ -66,5 +69,9 @@ data <- po_get("dataset-name", save_to = "data/peru/")
 # Force specific encoding for Spanish characters
 data <- po_get("resource-id", encoding = "Windows-1252")
 data <- po_get("resource-id", encoding = "ISO-8859-1")
+
+# Cache control examples
+data <- po_get("resource-id")  # Uses cache if available
+data <- po_get("resource-id", use_cache = FALSE)  # Force fresh download
 }
 }

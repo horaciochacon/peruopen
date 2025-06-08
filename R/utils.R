@@ -14,7 +14,7 @@ filter_resources_by_format <- function(resources_df, formats) {
   format_pattern <- paste0("(?i)(", format_pattern, ")")
   
   resources_df |>
-    dplyr::filter(grepl(format_pattern, format, perl = TRUE, na.rm = TRUE))
+    dplyr::filter(grepl(format_pattern, format, perl = TRUE))
 }
 
 extract_tags_from_metadata <- function(metadata_list) {
@@ -169,4 +169,57 @@ clean_email <- function(email) {
   }
   
   return(NA_character_)
+}
+
+parse_formatted_size <- function(size_string) {
+  if (is.na(size_string) || size_string == "" || !is.character(size_string)) {
+    return(0)
+  }
+  
+  # Clean the string and extract number and unit
+  size_string <- trimws(toupper(size_string))
+  
+  # Extract numeric part and unit using regex
+  match <- regexpr("([0-9]+\\.?[0-9]*)\\s*([KMGT]?B)?", size_string)
+  if (match == -1) {
+    return(0)
+  }
+  
+  # Extract the matched parts
+  matched_text <- substr(size_string, match, match + attr(match, "match.length") - 1)
+  
+  # Split into number and unit
+  parts <- strsplit(matched_text, "\\s+")[[1]]
+  if (length(parts) == 1) {
+    # Try to separate number from unit
+    num_match <- regexpr("^[0-9]+\\.?[0-9]*", parts[1])
+    if (num_match > 0) {
+      number <- as.numeric(substr(parts[1], 1, attr(num_match, "match.length")))
+      unit <- substr(parts[1], attr(num_match, "match.length") + 1, nchar(parts[1]))
+    } else {
+      return(0)
+    }
+  } else if (length(parts) >= 2) {
+    number <- as.numeric(parts[1])
+    unit <- parts[2]
+  } else {
+    return(0)
+  }
+  
+  if (is.na(number)) {
+    return(0)
+  }
+  
+  # Convert to bytes based on unit
+  unit <- gsub("^([KMGT]?)B?$", "\\1", unit)  # Remove B suffix, keep prefix
+  
+  multiplier <- switch(unit,
+    "K" = 1024,       # KB
+    "M" = 1024^2,     # MB  
+    "G" = 1024^3,     # GB
+    "T" = 1024^4,     # TB
+    1                 # default to bytes if unknown (including empty string)
+  )
+  
+  return(round(number * multiplier))
 }
