@@ -45,7 +45,7 @@ Start by getting the complete catalog of all available datasets:
 
 ```{r}
 # Get the complete catalog (may take a few minutes on first run)
-catalog <- po_catalog(refresh = TRUE)
+catalog <- po_catalog()
 
 # Explore the catalog structure
 catalog$datasets
@@ -53,6 +53,7 @@ catalog$resources
 ```
 
 The catalog contains:
+
 - **datasets**: Information about all available datasets
 - **resources**: Details about individual files and data resources  
 - **summary**: Statistics about the catalog

@@ -1496,3 +1496,256 @@ as_tibble.po_resources <- function(x, ...) {
   class(x) <- class(x)[!class(x) %in% "po_resources"]
   x
 }
+
+#' Knit print method for po_search results (for Quarto/markdown)
+#' @param x A po_search_result object
+#' @param ... Additional arguments passed to knit_print methods
+#' @importFrom knitr knit_print asis_output
+#' @export
+knit_print.po_search_result <- function(x, ...) {
+  output <- character()
+  
+  output <- c(output, "# Peru Open Data Search Results")
+  output <- c(output, "")
+  output <- c(output, paste0("**Query:** ", x$summary$query))
+  output <- c(output, paste0("**Found:** ", x$summary$n_datasets, " datasets with ", x$summary$n_resources, " resources"))
+  output <- c(output, paste0("**Total size:** ", x$summary$total_size_gb, " GB"))
+  output <- c(output, "")
+  
+  if (length(x$summary$formats_found) > 0) {
+    output <- c(output, "## Top formats")
+    output <- c(output, "")
+    top_formats <- head(x$summary$formats_found, 5)
+    for (i in seq_along(top_formats)) {
+      output <- c(output, paste0("- **", names(top_formats)[i], "**: ", top_formats[i], " files"))
+    }
+    output <- c(output, "")
+  }
+  
+  if (x$summary$n_datasets > 0) {
+    output <- c(output, "## Sample datasets")
+    output <- c(output, "")
+    sample_data <- head(x$datasets[, c("title", "organization", "n_resources")], 5)
+    for (i in 1:nrow(sample_data)) {
+      title_truncated <- if (nchar(sample_data$title[i]) > 50) {
+        paste0(substr(sample_data$title[i], 1, 47), "...")
+      } else {
+        sample_data$title[i]
+      }
+      output <- c(output, paste0("- **", title_truncated, "** (", sample_data$organization[i], ") [", sample_data$n_resources[i], " resources]"))
+    }
+    
+    if (x$summary$n_datasets > 5) {
+      output <- c(output, paste0("- ... and ", x$summary$n_datasets - 5, " more datasets"))
+    }
+    output <- c(output, "")
+  }
+  
+  output <- c(output, "---")
+  output <- c(output, "")
+  output <- c(output, "**Access data with:** `$datasets`, `$resources`, `$summary`")
+  
+  knitr::asis_output(paste(output, collapse = "\n"))
+}
+
+#' Knit print method for po_explore results (for Quarto/markdown)
+#' @param x A po_explore_result object
+#' @param ... Additional arguments passed to knit_print methods
+#' @importFrom knitr knit_print asis_output
+#' @export
+knit_print.po_explore_result <- function(x, ...) {
+  output <- character()
+  
+  output <- c(output, "# Peru Open Data Exploration")
+  if (!is.null(x$query)) {
+    output <- c(output, paste0("**Query:** ", x$query))
+  }
+  output <- c(output, "")
+  
+  output <- c(output, "## Summary")
+  output <- c(output, "")
+  output <- c(output, paste0("- **Datasets:** ", x$summary$n_datasets))
+  output <- c(output, paste0("- **Resources:** ", x$summary$n_resources))
+  output <- c(output, paste0("- **Organizations:** ", x$summary$n_organizations))
+  output <- c(output, paste0("- **Date range:** ", paste(x$summary$date_range, collapse = " to ")))
+  output <- c(output, "")
+  
+  output <- c(output, "## Top Organizations")
+  output <- c(output, "")
+  top_orgs <- head(x$by_organization, 5)
+  for (i in seq_along(top_orgs)) {
+    org <- names(top_orgs)[i]
+    info <- top_orgs[[i]]
+    output <- c(output, paste0(i, ". **", org, "**: ", info$n_datasets, " datasets, ", info$n_resources, " resources"))
+  }
+  output <- c(output, "")
+  
+  output <- c(output, "## Top Formats")
+  output <- c(output, "")
+  top_formats <- head(x$by_format, 5)
+  for (i in seq_along(top_formats)) {
+    fmt <- names(top_formats)[i]
+    info <- top_formats[[i]]
+    output <- c(output, paste0("- **", fmt, "**: ", info$n_resources, " files (avg ", info$avg_size_mb, " MB)"))
+  }
+  output <- c(output, "")
+  
+  output <- c(output, "## Recent Updates")
+  output <- c(output, "")
+  for (i in 1:min(5, nrow(x$recent))) {
+    title_truncated <- if (nchar(x$recent$title[i]) > 50) {
+      paste0(substr(x$recent$title[i], 1, 47), "...")
+    } else {
+      x$recent$title[i]
+    }
+    output <- c(output, paste0("- **", title_truncated, "** (", x$recent$last_updated[i], ")"))
+  }
+  output <- c(output, "")
+  
+  if (!is.null(x$recommendations$csv_available)) {
+    output <- c(output, "## Recommended Datasets (with CSV)")
+    output <- c(output, "")
+    for (i in 1:nrow(x$recommendations$csv_available)) {
+      output <- c(output, paste0("- ", x$recommendations$csv_available$dataset_name[i]))
+    }
+    output <- c(output, "")
+  }
+  
+  output <- c(output, "---")
+  output <- c(output, "")
+  output <- c(output, "**Explore further with:** `$by_organization`, `$by_format`, `$recent`, `$popular`")
+  
+  knitr::asis_output(paste(output, collapse = "\n"))
+}
+
+#' Knit print method for po_datasets (for Quarto/markdown)
+#' @param x A po_datasets object
+#' @param max_items Maximum number of items to display
+#' @param ... Additional arguments passed to knit_print methods
+#' @importFrom knitr knit_print asis_output
+#' @export
+knit_print.po_datasets <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
+  n_total <- nrow(x)
+  n_show <- min(max_items, n_total)
+  
+  output <- character()
+  
+  output <- c(output, paste0("# Peru Open Data - Datasets (", n_total, " total)"))
+  output <- c(output, "")
+  
+  if (n_total == 0) {
+    output <- c(output, "**No datasets found.**")
+    return(knitr::asis_output(paste(output, collapse = "\n")))
+  }
+  
+  for (i in 1:n_show) {
+    row <- x[i, ]
+    
+    output <- c(output, paste0(i, ". **", row$title, "**"))
+    output <- c(output, "")
+    
+    # Organization info
+    org_text <- if (is.na(row$organization) || row$organization == "") "[Unknown]" else row$organization
+    
+    # Size info
+    size_text <- if (is.na(row$total_size_mb)) "[Unknown]" else if (row$total_size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$total_size_mb)
+    
+    # Format info  
+    formats_text <- if (is.na(row$formats_available) || row$formats_available == "") "[Unknown]" else row$formats_available
+    
+    output <- c(output, paste0("   - **Organization:** ", org_text))
+    output <- c(output, paste0("   - **Resources:** ", row$n_resources, " (", formats_text, ")"))
+    output <- c(output, paste0("   - **Size:** ", size_text))
+    
+    # Date info
+    updated_text <- if (is.na(row$last_updated)) "[Unknown]" else row$last_updated
+    created_text <- if (is.na(row$created)) "[Unknown]" else row$created
+    
+    output <- c(output, paste0("   - **Last updated:** ", updated_text))
+    output <- c(output, paste0("   - **Created:** ", created_text))
+    
+    # Notes
+    if (!is.na(row$notes) && row$notes != "") {
+      notes_text <- if (nchar(row$notes) > 400) paste0(substr(row$notes, 1, 397), "...") else row$notes
+      output <- c(output, paste0("   - **Notes:** ", notes_text))
+    }
+    
+    output <- c(output, "")
+  }
+  
+  if (n_total > n_show) {
+    output <- c(output, paste0("... (showing ", n_show, " of ", n_total, " datasets)"))
+    output <- c(output, "")
+  }
+  
+  output <- c(output, "---")
+  output <- c(output, "")
+  output <- c(output, "**Access individual datasets:** `x[1]`, `x[2]`, etc. | **Full tibble:** `as_tibble(x)`")
+  
+  knitr::asis_output(paste(output, collapse = "\n"))
+}
+
+#' Knit print method for po_resources (for Quarto/markdown)
+#' @param x A po_resources object
+#' @param max_items Maximum number of items to display
+#' @param ... Additional arguments passed to knit_print methods
+#' @importFrom knitr knit_print asis_output
+#' @export
+knit_print.po_resources <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
+  n_total <- nrow(x)
+  n_show <- min(max_items, n_total)
+  
+  output <- character()
+  
+  output <- c(output, paste0("# Peru Open Data - Resources (", n_total, " total)"))
+  output <- c(output, "")
+  
+  if (n_total == 0) {
+    output <- c(output, "**No resources found.**")
+    return(knitr::asis_output(paste(output, collapse = "\n")))
+  }
+  
+  for (i in 1:n_show) {
+    row <- x[i, ]
+    
+    # Resource name and size
+    size_text <- if (is.na(row$size_mb)) "[Unknown]" else if (row$size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$size_mb)
+    output <- c(output, paste0(i, ". **", row$resource_name, "** (", size_text, ")"))
+    output <- c(output, "")
+    
+    # Dataset info
+    output <- c(output, paste0("   - **Dataset:** *", row$dataset_title, "*"))
+    
+    # Format and date info
+    format_text <- if (is.na(row$format)) "[Unknown]" else toupper(row$format)
+    modified_text <- if (is.na(row$last_modified)) "[Unknown]" else row$last_modified
+    
+    output <- c(output, paste0("   - **Format:** ", format_text))
+    output <- c(output, paste0("   - **Last modified:** ", modified_text))
+    
+    # URL
+    if (!is.na(row$url) && row$url != "") {
+      url_text <- if (nchar(row$url) > 300) paste0(substr(row$url, 1, 297), "...") else row$url
+      output <- c(output, paste0("   - **URL:** ", url_text))
+    }
+    
+    # Description
+    if (!is.na(row$description) && row$description != "" && row$description != "Resource description") {
+      desc_text <- if (nchar(row$description) > 400) paste0(substr(row$description, 1, 397), "...") else row$description
+      output <- c(output, paste0("   - **Description:** ", desc_text))
+    }
+    
+    output <- c(output, "")
+  }
+  
+  if (n_total > n_show) {
+    output <- c(output, paste0("... (showing ", n_show, " of ", n_total, " resources)"))
+    output <- c(output, "")
+  }
+  
+  output <- c(output, "---")
+  output <- c(output, "")
+  output <- c(output, "**Access individual resources:** `x[1]`, `x[2]`, etc. | **Full tibble:** `as_tibble(x)`")
+  
+  knitr::asis_output(paste(output, collapse = "\n"))
+}
