@@ -28,10 +28,10 @@ Imports:
     cli,
     fs,
     memoise,
-    rappdirs
+    rappdirs,
+    knitr
 Suggests: 
     testthat (>= 3.0.0),
-    knitr,
     rmarkdown,
     quarto
 Config/testthat/edition: 3
