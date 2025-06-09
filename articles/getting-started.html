@@ -72,12 +72,12 @@
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/horaciochacon/peruopen" class="external-link">peruopen</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-<section class="level2"><h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
-</h2>
+<section class="section level3"><h3 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h3>
 <p>The <strong>peruopen</strong> package provides a comprehensive interface to Peru’s CKAN data portal (<a href="https://datosabiertos.gob.pe" class="external-link">datosabiertos.gob.pe</a>), enabling you to search, discover, and download open government datasets directly into R.</p>
 <p>With <strong>peruopen</strong>, you can access over 3,954 datasets and 10,000+ resources from 283+ government organizations in Peru.</p>
-</section><section class="level2"><h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
+</section><section class="section level3"><h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h3>
 <p>Install the package from GitHub:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
@@ -85,165 +85,1711 @@
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"horaciochacon/peruopen"</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/horaciochacon/peruopen" class="external-link">peruopen</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h2 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
-</h2>
-<section class="level3"><h3 id="get-the-complete-data-catalog">1. Get the Complete Data Catalog<a class="anchor" aria-label="anchor" href="#get-the-complete-data-catalog"></a>
+</section><section class="section level3"><h3 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h3>
+<section class="level3"><h4 id="get-the-complete-data-catalog">1. Get the Complete Data Catalog<a class="anchor" aria-label="anchor" href="#get-the-complete-data-catalog"></a>
+</h4>
 <p>Start by getting the complete catalog of all available datasets:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get the complete catalog (may take a few minutes on first run)</span></span>
-<span><span class="va">catalog</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_catalog.html">po_catalog</a></span><span class="op">(</span>refresh <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">catalog</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_catalog.html">po_catalog</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Building catalog with target: 3954 datasets...</span></span>
+<span><span class="co">#&gt; Using chunked loading approach...</span></span>
+<span><span class="co">#&gt; Batch 1 : fetching 250 datasets (offset: 0 )</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 3.5 seconds</span></span>
+<span><span class="co">#&gt; Batch 2 : fetching 250 datasets (offset: 250 )</span></span>
+<span><span class="co">#&gt;   Waiting 2.5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 2.4 seconds</span></span>
+<span><span class="co">#&gt; Batch 3 : fetching 250 datasets (offset: 500 )</span></span>
+<span><span class="co">#&gt;   Waiting 3 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 2.2 seconds</span></span>
+<span><span class="co">#&gt; Batch 4 : fetching 250 datasets (offset: 750 )</span></span>
+<span><span class="co">#&gt;   Waiting 3.5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 1.8 seconds</span></span>
+<span><span class="co">#&gt; Batch 5 : fetching 250 datasets (offset: 1000 )</span></span>
+<span><span class="co">#&gt;   Waiting 4 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 2.6 seconds</span></span>
+<span><span class="co">#&gt; Batch 6 : fetching 250 datasets (offset: 1250 )</span></span>
+<span><span class="co">#&gt;   Waiting 4.5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 2.2 seconds</span></span>
+<span><span class="co">#&gt; Batch 7 : fetching 250 datasets (offset: 1500 )</span></span>
+<span><span class="co">#&gt;   Waiting 5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 2.2 seconds</span></span>
+<span><span class="co">#&gt; Batch 8 : fetching 250 datasets (offset: 1750 )</span></span>
+<span><span class="co">#&gt;   Waiting 5.5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 2.1 seconds</span></span>
+<span><span class="co">#&gt; Batch 9 : fetching 250 datasets (offset: 2000 )</span></span>
+<span><span class="co">#&gt;   Waiting 6 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 1.5 seconds</span></span>
+<span><span class="co">#&gt; Batch 10 : fetching 250 datasets (offset: 2250 )</span></span>
+<span><span class="co">#&gt;   Waiting 6.5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 1.5 seconds</span></span>
+<span><span class="co">#&gt; Batch 11 : fetching 250 datasets (offset: 2500 )</span></span>
+<span><span class="co">#&gt;   Waiting 7 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 5.5 seconds</span></span>
+<span><span class="co">#&gt; Batch 12 : fetching 250 datasets (offset: 2750 )</span></span>
+<span><span class="co">#&gt;   Waiting 7.5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 1.3 seconds</span></span>
+<span><span class="co">#&gt; Batch 13 : fetching 250 datasets (offset: 3000 )</span></span>
+<span><span class="co">#&gt;   Waiting 8 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 2.1 seconds</span></span>
+<span><span class="co">#&gt; Batch 14 : fetching 250 datasets (offset: 3250 )</span></span>
+<span><span class="co">#&gt;   Waiting 8.5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 13.3 seconds</span></span>
+<span><span class="co">#&gt; Batch 15 : fetching 250 datasets (offset: 3500 )</span></span>
+<span><span class="co">#&gt;   Waiting 9 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 250 datasets in 3.1 seconds</span></span>
+<span><span class="co">#&gt; Batch 16 : fetching 204 datasets (offset: 3750 )</span></span>
+<span><span class="co">#&gt;   Waiting 9.5 seconds for API stability...</span></span>
+<span><span class="co">#&gt;   ✓ SUCCESS: Got 204 datasets in 1 seconds</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Chunked loading complete:</span></span>
+<span><span class="co">#&gt;   New datasets fetched: 3954</span></span>
+<span><span class="co">#&gt;   Total datasets: 3954</span></span>
+<span><span class="co">#&gt;   Coverage: ~100% of Peru open data</span></span>
+<span><span class="co">#&gt;   Successful batches: 16/16</span></span>
+<span><span class="co">#&gt; Processing catalog structure...</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Catalog summary:</span></span>
+<span><span class="co">#&gt;   - Datasets: 3,954</span></span>
+<span><span class="co">#&gt;   - Resources: 11,284</span></span>
+<span><span class="co">#&gt;   - Total size: 88.6 GB</span></span>
+<span><span class="co">#&gt;   - Organizations: 201</span></span>
+<span><span class="co">#&gt;   - Formats: csv, xlsx, zip, pdf, docx</span></span>
 <span></span>
 <span><span class="co"># Explore the catalog structure</span></span>
-<span><span class="va">catalog</span></span>
-<span><span class="va">catalog</span><span class="op">$</span><span class="va">datasets</span></span>
-<span><span class="va">catalog</span><span class="op">$</span><span class="va">resources</span></span></code></pre></div>
+<span><span class="va">catalog</span><span class="op">$</span><span class="va">datasets</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---datasets-3954-total">Peru Open Data - Datasets (3954 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---datasets-3954-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>Ejecución Presupuestal PP0030 - Mayo 2025</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio del Interior - MININTER</li>
+<li>
+<strong>Resources:</strong> 2 (csv, xlsx)</li>
+<li>
+<strong>Size:</strong> 27.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-06-06</li>
+<li>
+<strong>Created:</strong> 2025-06-06</li>
+<li>
+<strong>Notes:</strong> Esta base de datos permite acceder a información detallada sobre la programación y ejecución presupuestal del Programa Presupuestal PP0030 a nivel de gobiernos locales, desagregada por años, regiones y niveles de intervención. Estos datos constituyen un insumo clave para el análisis de la asignación y uso de recursos públicos destinados a la mejora de la seguridad ciudadana, y facilitan la toma…</li>
+</ul>
+</li>
+<li>
+<p><strong>Parque Automotor de la PNP - Mayo 2025</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio del Interior - MININTER</li>
+<li>
+<strong>Resources:</strong> 2 (csv, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.8 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-06-06</li>
+<li>
+<strong>Created:</strong> 2025-06-06</li>
+<li>
+<strong>Notes:</strong> Esta base de datos permite acceder a información detallada sobre el parque automotor de la Policía Nacional del Perú, incluyendo características de los vehículos como tipo, estado, uso operativo y ubicación geográfica. Esta información es clave para la gestión logística, la planificación operativa y la toma de decisiones estratégicas orientadas a la modernización y optimización del recurso vehi…</li>
+</ul>
+</li>
+<li>
+<p><strong>Registro Nacional de Plantaciones Forestales por Especies</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Servicio Nacional Forestal y de Fauna Silvestre - SERFOR</li>
+<li>
+<strong>Resources:</strong> 222 (csv, data, xlb)</li>
+<li>
+<strong>Size:</strong> 441.1 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-06-06</li>
+<li>
+<strong>Created:</strong> 2022-10-01</li>
+<li>
+<strong>Notes:</strong> Las plantaciones forestales deben inscribirse en el Registro Nacional de Plantaciones Forestales, en cumplimiento a la Resolución de Dirección Ejecutiva N° 165-2015-SERFOR-DE, y solo requieren de una actualización de su registro antes de la cosecha, información que podrá ser verificada por las Autoridades Regionales Forestales y de Fauna Silvestre (ARFFS), mediante inspección en campo. Dicha ve…</li>
+</ul>
+</li>
+<li>
+<p><strong>Registro Nacional de Infractores [SERFOR]</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Servicio Nacional Forestal y de Fauna Silvestre - SERFOR</li>
+<li>
+<strong>Resources:</strong> 176 (csv, xlb)</li>
+<li>
+<strong>Size:</strong> 74.5 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-06-06</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+</ul>
+</li>
+<li>
+<p><strong>Violencia contra la Mujer e Integrantes del Grupo Familiar - Mayo 2025</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio del Interior - MININTER</li>
+<li>
+<strong>Resources:</strong> 2 (csv, xlsx)</li>
+<li>
+<strong>Size:</strong> 3.5 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-06-06</li>
+<li>
+<strong>Created:</strong> 2025-06-06</li>
+<li>
+<strong>Notes:</strong> Esta base de datos permite acceder a información desagregada sobre hechos de violencia contra la Mujer e Integrantes del Grupo Familiar registrados a nivel nacional, organizada por año, mes, departamento, provincia y distrito. Proporciona datos valiosos para entender la distribución territorial y temporal de la violencia, sirviendo como insumo clave para el diseño de políticas públicas, interve…</li>
+</ul>
+</li>
+<li>
+<p><strong>Sanciones emitidas por OSINFOR a Títulos Habilitantes [Organismo de Supervisión de los Recursos Forestales y de Fauna Silvestre - OSINFOR]</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Organismo de Supervisión de los Recursos Forestales y de Fauna Silvestre - OSINFOR</li>
+<li>
+<strong>Resources:</strong> 3 (csv, docx, xlsx)</li>
+<li>
+<strong>Size:</strong> 1.1 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-06-06</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Este registro presenta información de los titulares de títulos habilitantes sancionados , mediante un llamado de atención (amonestación) o una multa; o caducos , por medio de la extinción de la titularidad , por el Organismo de Supervisión Forestal y de Fauna Silvestre (OSINFOR) , entidad encargada a nivel nacional de la supervisión y fiscalización del aprovechamiento forestal y de fauna silves…</li>
+</ul>
+</li>
+<li>
+<p><strong>Catálogo de deformación GNSS de los volcanes más activos del Perú (Ubinas y Sabancaya)</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Instituto Geofísico del Perú - IGP</li>
+<li>
+<strong>Resources:</strong> 3 (.xlsx, csv, docx)</li>
+<li>
+<strong>Size:</strong> 0.1 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-05-06</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> El Catálogo GNSS de los volcanes más activos del Perú (Ubinas y Sabancaya) es un dataset fundamental para el monitoreo y análisis de la deformación superficial en estos importantes sistemas volcánicos. El catálogo consta de seis campos esenciales que proporcionan información detallada sobre el desplazamiento en cada componente del GNSS. En primer lugar, se indica la fecha en la que se registró …</li>
+</ul>
+</li>
+<li>
+<p><strong>BENEFICIARIOS DEL CENTRO INTEGRAL DE ATENCION AL ADULTO MAYOR EN EL DISTRITO DE LA ARENA - [MUNICIPALIDAD DISTRITAL LA ARENA - MDLA]</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Municipalidad Distrital de La Arena - MDLA</li>
+<li>
+<strong>Resources:</strong> 0 ([Unknown])</li>
+<li>
+<strong>Size:</strong> &lt; 0.01 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-05-06</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+</ul>
+</li>
+<li>
+<p><strong>BENEFICIARIOS DEL CENTRO INTEGRAL DE ATENCION AL ADULTO MAYOR EN EL DISTRITO DE LA ARENA - [MUNICIPALIDAD DISTRITAL LA ARENA - MDLA]</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Municipalidad Distrital de La Arena - MDLA</li>
+<li>
+<strong>Resources:</strong> 3 (.xlsx, csv, docx)</li>
+<li>
+<strong>Size:</strong> 0.5 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-05-06</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Información de los beneficiarios del Centro Integral de Atención al Adulto Mayor en la Municipalidad Distrital de La Arena en el año 2024. Este registro de beneficiarios del Centro Integral de Atención al Adulto Mayor, están caracterizadas por: Datos de la entidad : Departamento, provincia, distrito, gobierno local de la entidad. Datos de beneficiarios : Ubigeo, Centro Poblado; Fecha de nacimie…</li>
+</ul>
+</li>
+<li><p><strong>Registro Nacional de Municipalidades (RENAMU) 2024 - [Instituto Nacional de Estadística e Informática - INEI]</strong></p></li>
+</ol>
+<ul>
+<li>
+<strong>Organization:</strong> Instituto Nacional de Estadística e Informática - INEI</li>
+<li>
+<strong>Resources:</strong> 3 (csv, pdf, zip)</li>
+<li>
+<strong>Size:</strong> 0.1 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-05-06</li>
+<li>
+<strong>Created:</strong> 2025-06-02</li>
+<li>
+<strong>Notes:</strong> Objetivo General Disponer de información estadística de las municipalidades provinciales, distritales y de centros poblados, a fin de generar indicadores municipales que sirvan de apoyo a la gestión regional y local para la planificación y la adecuada toma de decisiones. Objetivos Específicos Disponer de un Directorio Nacional de Municipalidades Provinciales, Distritales y de Centros Poblados a…</li>
+</ul>
+<p>… (showing 10 of 3954 datasets)</p>
+<hr>
+<p><strong>Access individual datasets:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section><div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">catalog</span><span class="op">$</span><span class="va">resources</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---resources-11284-total">Peru Open Data - Resources (11284 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---resources-11284-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>Dataset Ejecución Presupuestal PP0030 - Mayo 2025</strong> (27.0 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Ejecución Presupuestal PP0030 - Mayo 2025</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2025-06-06</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Ejecucion_presupuestal_PP0030_31052025.csv</li>
+<li>
+<strong>Description:</strong> Esta base de datos permite acceder a información detallada sobre la programación y ejecución presupuestal del Programa Presupuestal PP0030 a nivel de gobiernos locales, desagregada por años, regiones y niveles de intervención. Estos datos constituyen un insumo clave para el análisis de la asignación y uso de recursos públicos destinados a la mejora de la seguridad ciudadana, y facilitan la toma…</li>
+</ul>
+</li>
+<li>
+<p><strong>Diccionario de datos Ejecución Presupuestal PP0030</strong> (0.0 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Ejecución Presupuestal PP0030 - Mayo 2025</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> 2025-06-06</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/diccionario_variable_ejecucion_presupuestal.xlsx</li>
+<li>
+<strong>Description:</strong> Para facilitar la interpretación de los datos, se incluye un diccionario de variables que describe cada campo presente en la base, su tipo y categoría. Esta documentación técnica permite a los usuarios tanto del sector público como de la sociedad civil, la academia y organismos de cooperación comprender a profundidad los elementos del conjunto de datos y desarrollar análisis comparativos, evalu…</li>
+</ul>
+</li>
+<li>
+<p><strong>Dataset Parque Automotor de la PNP - Mayo 2025</strong> (0.7 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Parque Automotor de la PNP - Mayo 2025</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2025-06-06</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Parque_automotor_31052025.csv</li>
+<li>
+<strong>Description:</strong> Esta base de datos permite acceder a información detallada sobre el parque automotor de la Policía Nacional del Perú, incluyendo características de los vehículos como tipo, estado, uso operativo y ubicación geográfica. Esta información es clave para la gestión logística, la planificación operativa y la toma de decisiones estratégicas orientadas a la modernización y optimización del recurso vehi…</li>
+</ul>
+</li>
+<li>
+<p><strong>Diccionario de datos Parque Automotor de la PNP</strong> (0.0 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Parque Automotor de la PNP - Mayo 2025</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> 2025-06-06</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/diccionario_variable_parque_automotor.xlsx</li>
+<li>
+<strong>Description:</strong> El archivo contiene el diccionario de datos correspondiente a la base de datos del parque automotor de la Policía Nacional del Perú. Su objetivo es proporcionar una guía clara y estructurada sobre las variables incluidas en el conjunto de datos, permitiendo a los usuarios comprender el significado, tipo y posible categoría de cada campo. Cada fila del diccionario representa una variable, e incl…</li>
+</ul>
+</li>
+<li>
+<p><strong>Plantaciones</strong> (3.0 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Registro Nacional de Plantaciones Forestales por Especies</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/DataSetPlantaciones.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>Plantaciones</strong> (1.6 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Registro Nacional de Plantaciones Forestales por Especies</em>
+</li>
+<li>
+<strong>Format:</strong> XLB</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Plantaciones.xls</li>
+</ul>
+</li>
+<li>
+<p><strong>Plantaciones</strong> (3.2 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Registro Nacional de Plantaciones Forestales por Especies</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/DataSetPlantaciones%20%281%29.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>Plantaciones</strong> (3.2 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Registro Nacional de Plantaciones Forestales por Especies</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/DataSetPlantaciones%20%281%29.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>Plantaciones</strong> (3.3 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Registro Nacional de Plantaciones Forestales por Especies</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/DataSetPlantaciones_0.csv</li>
+</ul>
+</li>
+<li><p><strong>Plantaciones</strong> (1.4 MB)</p></li>
+</ol>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Registro Nacional de Plantaciones Forestales por Especies</em>
+</li>
+<li>
+<strong>Format:</strong> XLB</li>
+<li>
+<strong>Last modified:</strong> 2022-02-03</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Plantaciones_0.xls</li>
+</ul>
+<p>… (showing 10 of 11284 resources)</p>
+<hr>
+<p><strong>Access individual resources:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section>
 </div>
-<p>The catalog contains: - <strong>datasets</strong>: Information about all available datasets - <strong>resources</strong>: Details about individual files and data resources<br>
-- <strong>summary</strong>: Statistics about the catalog</p>
-</section><section class="level3"><h3 id="search-for-cdc-data">2. Search for CDC Data<a class="anchor" aria-label="anchor" href="#search-for-cdc-data"></a>
-</h3>
+<p>The catalog contains:</p>
+<ul>
+<li>
+<strong>datasets</strong>: Information about all available datasets</li>
+<li>
+<strong>resources</strong>: Details about individual files and data resources<br>
+</li>
+<li>
+<strong>summary</strong>: Statistics about the catalog</li>
+</ul></section><section class="level3"><h4 id="search-for-cdc-data">2. Search for CDC Data<a class="anchor" aria-label="anchor" href="#search-for-cdc-data"></a>
+</h4>
 <p>Search for surveillance data from CDC (Centro Nacional de Epidemiología):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Search for datasets with CDC tags</span></span>
 <span><span class="va">vigilancia</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>tags <span class="op">=</span> <span class="st">"cdc"</span><span class="op">)</span></span>
-<span><span class="va">vigilancia</span></span>
-<span></span>
-<span><span class="co"># Explore the results</span></span>
-<span><span class="va">vigilancia</span><span class="op">$</span><span class="va">datasets</span></span>
-<span><span class="va">vigilancia</span><span class="op">$</span><span class="va">resources</span></span></code></pre></div>
-</div>
-</section><section class="level3"><h3 id="download-cdc-data">3. Download CDC Data<a class="anchor" aria-label="anchor" href="#download-cdc-data"></a>
+<span><span class="va">vigilancia</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results"></a>
+</h2>
+<p><strong>Query:</strong> tags: cdc <strong>Found:</strong> 7 datasets with 8 resources <strong>Total size:</strong> 0.38 GB</p>
+<section class="level2"><h3 id="top-formats">Top formats<a class="anchor" aria-label="anchor" href="#top-formats"></a>
 </h3>
+<ul>
+<li>
+<strong>csv</strong>: 8 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets"></a>
+</h3>
+<ul>
+<li>
+<strong>Vigilancia Epidemiológica de las zoonosis</strong> (NA) [1 resources]</li>
+<li>
+<strong>Vigilancia epidemiológica de Malaria</strong> (NA) [2 resources]</li>
+<li>
+<strong>Vigilancia Epidemiológica de dengue</strong> (NA) [1 resources]</li>
+<li>
+<strong>vigilancia epidemiológica de leishmaniosis</strong> (NA) [1 resources]</li>
+<li>
+<strong>Vigilancia epidemiologica de Infecciones Respir…</strong> (NA) [1 resources]</li>
+<li>… and 2 more datasets</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section><div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Explore the results</span></span>
+<span><span class="va">vigilancia</span><span class="op">$</span><span class="va">datasets</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---datasets-7-total">Peru Open Data - Datasets (7 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---datasets-7-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>Vigilancia Epidemiológica de las zoonosis</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> [Unknown]</li>
+<li>
+<strong>Resources:</strong> 1 (csv)</li>
+<li>
+<strong>Size:</strong> 10.1 MB</li>
+<li>
+<strong>Last updated:</strong> [Unknown]</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Dataset de notificación de casos de enfermedades zoonoticas al sistema de vigilancia en salud pública del Perú Este dataset contiene información sobre la notificación de casos de dengue al sistema de vigilancia en salud pública del Perú, gestionado y administrado por el Centro Nacional de Epidemiología, Prevención y Control de Enfermedades (CDC PERU) . Los datos provienen de la Red Nacional de …</li>
+</ul>
+</li>
+<li>
+<p><strong>Vigilancia epidemiológica de Malaria</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> [Unknown]</li>
+<li>
+<strong>Resources:</strong> 2 (csv)</li>
+<li>
+<strong>Size:</strong> 60.0 MB</li>
+<li>
+<strong>Last updated:</strong> [Unknown]</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Dataset de notificación de casos de malaria al sistema de vigilancia en salud pública del Perú Este dataset contiene información sobre la notificación de casos de malaria al sistema de vigilancia en salud pública del Perú, gestionado y administrado por el Centro Nacional de Epidemiología, Prevención y Control de Enfermedades (CDC PERU) . Los datos provienen de la Red Nacional de Epidemiología (…</li>
+</ul>
+</li>
+<li>
+<p><strong>Vigilancia Epidemiológica de dengue</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> [Unknown]</li>
+<li>
+<strong>Resources:</strong> 1 (csv)</li>
+<li>
+<strong>Size:</strong> 78.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2024-11-12</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Dataset de notificación de casos de dengue al sistema de vigilancia en salud pública del Perú Este dataset contiene información sobre la notificación de casos de dengue al sistema de vigilancia en salud pública del Perú, gestionado y administrado por el Centro Nacional de Epidemiología, Prevención y Control de Enfermedades (CDC PERU) . Los datos provienen de la Red Nacional de Epidemiología (RE…</li>
+</ul>
+</li>
+<li>
+<p><strong>vigilancia epidemiológica de leishmaniosis</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> [Unknown]</li>
+<li>
+<strong>Resources:</strong> 1 (csv)</li>
+<li>
+<strong>Size:</strong> 15.1 MB</li>
+<li>
+<strong>Last updated:</strong> 2024-11-12</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Dataset de notificación de casos de leishmaniosis al sistema de vigilancia en salud pública del Perú Este dataset contiene información sobre la notificación de casos de leishmaniosis al sistema de vigilancia en salud pública del Perú, gestionado y administrado por el Centro Nacional de Epidemiología, Prevención y Control de Enfermedades (CDC PERU) . Los datos provienen de la Red Nacional de Epi…</li>
+</ul>
+</li>
+<li>
+<p><strong>Vigilancia epidemiologica de Infecciones Respiratoiras Agudas (IRA)</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> [Unknown]</li>
+<li>
+<strong>Resources:</strong> 1 (csv)</li>
+<li>
+<strong>Size:</strong> 123.7 MB</li>
+<li>
+<strong>Last updated:</strong> 2024-11-12</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Dataset de notificación de casos de infecciones respiratorias agudas al sistema de vigilancia en salud pública del Perú Este dataset contiene información sobre la notificación de casos de Infecciones Respiratorias Agudas (IRA) al sistema de vigilancia en salud pública del Perú, gestionado y administrado por el Centro Nacional de Epidemiología, Prevención y Control de Enfermedades (CDC PERU) . L…</li>
+</ul>
+</li>
+<li>
+<p><strong>Vigilancia Epidemiológica de Enfermedad de Carrión</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> [Unknown]</li>
+<li>
+<strong>Resources:</strong> 1 (csv)</li>
+<li>
+<strong>Size:</strong> 5.3 MB</li>
+<li>
+<strong>Last updated:</strong> 2024-11-12</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Dataset de notificación de casos de Enfermedad de Carrion al sistema de vigilancia en salud pública del Perú Este dataset contiene información sobre la notificación de casos de Enfermedad de Carrión al sistema de vigilancia en salud pública del Perú, gestionado y administrado por el Centro Nacional de Epidemiología, Prevención y Control de Enfermedades (CDC PERU) . Los datos provienen de la Red…</li>
+</ul>
+</li>
+<li>
+<p><strong>Vigilancia epidemiológica de Enfermedad Diarreica Aguda (EDA)</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> [Unknown]</li>
+<li>
+<strong>Resources:</strong> 1 (csv)</li>
+<li>
+<strong>Size:</strong> 101.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2024-11-12</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Dataset de notificación de casos de Enfermedad Diarreica Aguda al sistema de vigilancia en salud pública del Perú Este dataset contiene información sobre la notificación de casos de Enfermedad Diarreica Aguda al sistema de vigilancia en salud pública del Perú, gestionado y administrado por el Centro Nacional de Epidemiología, Prevención y Control de Enfermedades (CDC PERU) . Los datos provienen…</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p><strong>Access individual datasets:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section><div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vigilancia</span><span class="op">$</span><span class="va">resources</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---resources-8-total">Peru Open Data - Resources (8 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---resources-8-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>datos_abiertos_vigilancia_zoonosis_2000_2023</strong> (10.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Vigilancia Epidemiológica de las zoonosis</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/datos_abiertos_vigilancia_zoonosis_2000_2023.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>datos_abiertos_vigilancia_malaria_2000_2008.csv</strong> (5.6 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Vigilancia epidemiológica de Malaria</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/datos_abiertos_vigilancia_malaria_2000_2008.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>datos_abiertos_vigilancia_malaria_2009_2023</strong> (54.4 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Vigilancia epidemiológica de Malaria</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/datos_abiertos_vigilancia_malaria_2009_2023.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>datos_abiertos_vigilancia_dengue_2000_2023.csv</strong> (78.0 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Vigilancia Epidemiológica de dengue</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2024-11-12</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/datos_abiertos_vigilancia_dengue_2000_2023.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>datos_abiertos_vigilancia_leishmaniosis_2000_2023.csv</strong> (15.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>vigilancia epidemiológica de leishmaniosis</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2024-11-12</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/datos_abiertos_vigilancia_leishmaniosis_2000_2023.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>datos_abiertos_vigilancia_iras_2000_2023.csv</strong> (123.7 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Vigilancia epidemiologica de Infecciones Respiratoiras Agudas (IRA)</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2024-10-12</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/datos_abiertos_vigilancia_iras_2000_2023.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>datos_abiertos_vigilancia_enfermedad_carrion_2000_2023.csv</strong> (5.3 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Vigilancia Epidemiológica de Enfermedad de Carrión</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2024-11-12</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/datos_abiertos_vigilancia_enfermedad_carrion_2000_2023.csv</li>
+</ul>
+</li>
+<li>
+<p><strong>datos_abiertos_vigilancia_edas_200_2023.csv</strong> (101.0 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Vigilancia epidemiológica de Enfermedad Diarreica Aguda (EDA)</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2024-11-12</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/datos_abiertos_vigilancia_edas_2000_2023.csv</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p><strong>Access individual resources:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section>
+</div>
+</section><section class="level3"><h4 id="download-cdc-data">3. Download CDC Data<a class="anchor" aria-label="anchor" href="#download-cdc-data"></a>
+</h4>
 <p>Download resources directly into R:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Download all resources from the CDC search</span></span>
-<span><span class="fu"><a href="../reference/po_get.html">po_get</a></span><span class="op">(</span><span class="va">vigilancia</span><span class="op">$</span><span class="va">resources</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">vigilancia</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_get.html">po_get</a></span><span class="op">(</span><span class="va">vigilancia</span><span class="op">$</span><span class="va">resources</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Processing 8 resources...</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [1/8] Processing: datos_abiertos_vigilancia_zoonosis_2000_2023</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [2/8] Processing: datos_abiertos_vigilancia_malaria_2000_2008.csv</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [3/8] Processing: datos_abiertos_vigilancia_malaria_2009_2023</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [4/8] Processing: datos_abiertos_vigilancia_dengue_2000_2023.csv</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [5/8] Processing: datos_abiertos_vigilancia_leishmaniosis_2000_2023.csv</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [6/8] Processing: datos_abiertos_vigilancia_iras_2000_2023.csv</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [7/8] Processing: datos_abiertos_vigilancia_enfermedad_carrion_2000_2023.csv</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [8/8] Processing: datos_abiertos_vigilancia_edas_200_2023.csv</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Completed: 8/8 resources loaded successfully</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">vigilancia</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "datos_abiertos_vigilancia_zoonosis_2000_2023"              </span></span>
+<span><span class="co">#&gt; [2] "datos_abiertos_vigilancia_malaria_2000_2008.csv"           </span></span>
+<span><span class="co">#&gt; [3] "datos_abiertos_vigilancia_malaria_2009_2023"               </span></span>
+<span><span class="co">#&gt; [4] "datos_abiertos_vigilancia_dengue_2000_2023.csv"            </span></span>
+<span><span class="co">#&gt; [5] "datos_abiertos_vigilancia_leishmaniosis_2000_2023.csv"     </span></span>
+<span><span class="co">#&gt; [6] "datos_abiertos_vigilancia_iras_2000_2023.csv"              </span></span>
+<span><span class="co">#&gt; [7] "datos_abiertos_vigilancia_enfermedad_carrion_2000_2023.csv"</span></span>
+<span><span class="co">#&gt; [8] "datos_abiertos_vigilancia_edas_200_2023.csv"</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h3 id="search-by-organization">4. Search by Organization<a class="anchor" aria-label="anchor" href="#search-by-organization"></a>
-</h3>
+</section><section class="level3"><h4 id="search-by-organization">4. Search by Organization<a class="anchor" aria-label="anchor" href="#search-by-organization"></a>
+</h4>
 <p>Find data from specific government organizations like MINSA:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Search for all MINSA (Ministry of Health) datasets</span></span>
 <span><span class="va">minsa</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>organizations <span class="op">=</span> <span class="st">"MINSA"</span><span class="op">)</span></span>
-<span><span class="va">minsa</span></span>
-<span><span class="va">minsa</span><span class="op">$</span><span class="va">datasets</span></span></code></pre></div>
-</div>
-</section><section class="level3"><h3 id="geographic-data-from-inei">5. Geographic Data from INEI<a class="anchor" aria-label="anchor" href="#geographic-data-from-inei"></a>
+<span><span class="va">minsa</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-1">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-1"></a>
+</h2>
+<p><strong>Query:</strong> (all data) <strong>Found:</strong> 42 datasets with 137 resources <strong>Total size:</strong> 0.44 GB</p>
+<section class="level2"><h3 id="top-formats-1">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-1"></a>
 </h3>
+<ul>
+<li>
+<strong>csv</strong>: 56 files</li>
+<li>
+<strong>data</strong>: 32 files</li>
+<li>
+<strong>xlsx</strong>: 26 files</li>
+<li>
+<strong>pdf</strong>: 13 files</li>
+<li>****: 5 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-1">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-1"></a>
+</h3>
+<ul>
+<li>
+<strong>CENAN-INS VIGILANCIA DEL ESTADO NUTRICIONAL DE …</strong> (Ministerio de Salud - MINSA) [1 resources]</li>
+<li>
+<strong>Catálogo de Fabricante de Vacunas</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>
+<strong>SINADEF: Certificado Defunciones</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>
+<strong>Vacunación contra COVID - 19 [Ministerio de Sal…</strong> (Ministerio de Salud - MINSA) [3 resources]</li>
+<li>
+<strong>Modelo Entidad Relación de los datasets del MIN…</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>… and 37 more datasets</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section><div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">minsa</span><span class="op">$</span><span class="va">datasets</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---datasets-42-total">Peru Open Data - Datasets (42 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---datasets-42-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>CENAN-INS VIGILANCIA DEL ESTADO NUTRICIONAL DE ADOLESCENTES Y ADULTOS MAYORES PERÚ 2017-2018 (VIANEV)</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 1 (zip)</li>
+<li>
+<strong>Size:</strong> 0.1 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-12-02</li>
+<li>
+<strong>Created:</strong> 2023-06-06</li>
+<li>
+<strong>Notes:</strong> Título: “Estado nutricional de los adolescentes de 12 a 17 años y adultos mayores de 60 años a más; VIANEV, 2017 – 2018”. INS-CENAN. Nombre del Órgano de Dirección, línea, apoyo y asesoría: Dirección Ejecutiva de Vigilancia Alimentaria y Nutricional - Centro Nacional de Alimentación y Nutrición – Instituto Nacional de Salud. Período de recolección de los datos: El periodo de recolección de dato…</li>
+</ul>
+</li>
+<li>
+<p><strong>Catálogo de Fabricante de Vacunas</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 2 (data, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-12-02</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Contiene la lista de las características de las vacunas aplicadas según fabricante y país de origen.</li>
+</ul>
+</li>
+<li>
+<p><strong>SINADEF: Certificado Defunciones</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 2 (data, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.0 MB</li>
+<li>
+<strong>Last updated:</strong> [Unknown]</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Contiene los datos del fallecido, genera el certificado de defunción y el informe estadístico; incluye las defunciones fetales, las defunciones generales y las diagnósticos y antecedentes de enfermedad de causas de defunción, los datos son preliminares a la fecha</li>
+</ul>
+</li>
+<li>
+<p><strong>Vacunación contra COVID - 19 [Ministerio de Salud - MINSA]</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 3 (data, xls, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.0 MB</li>
+<li>
+<strong>Last updated:</strong> [Unknown]</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Los datos publicados corresponden a las vacunas reportadas contra COVID-19 a nivel nominal.</li>
+</ul>
+</li>
+<li>
+<p><strong>Modelo Entidad Relación de los datasets del MINSA para el DATATÓN</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 2 (xlsx, zip)</li>
+<li>
+<strong>Size:</strong> 0.8 MB</li>
+<li>
+<strong>Last updated:</strong> [Unknown]</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Modelo Entidad Relación de los datasets del MINSA para el DATATÓN</li>
+</ul>
+</li>
+<li>
+<p><strong>Fallecidos, hospitalizados y vacunados por COVID-19</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 2 (csv, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.0 MB</li>
+<li>
+<strong>Last updated:</strong> [Unknown]</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Esta tabla toma como referencia el universo de fallecidos por covid (en base al criterio del CDC), vinculando información de aquellos que estuvieron hospitalizados (F500-SICOVID) y si han recibido dosis de vacunas covid</li>
+</ul>
+</li>
+<li>
+<p><strong>Establecimientos de Salud</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 2 (data, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2021-08-09</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Esta tabla contiene la lista de los 23,656 establecimientos de salud del Perú del Registro Nacional de Instituciones Prestadoras de Servicios de Salud RENIPRESS de la Superintendencia Nacional de Salud – SUSALUD.</li>
+</ul>
+</li>
+<li>
+<p><strong>Codigos equivalentes de UBIGEO del Peru</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 2 (data, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2021-08-09</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Contiene las equivalencias de los códigos de UBIGEO del Perú, codificados por RENIEC y el INEI. Tiene un campo id_ubigeo que enlaza a una unidad geográfica equivalente. Contiene la descripción a nivel de departamento, región, provincia y distrito. Además contiene datos de superficie en km2, altitud, latitud y longitud del distrito.</li>
+</ul>
+</li>
+<li>
+<p><strong>Centros de Vacunacion</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 2 (data, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2021-08-09</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Esta tabla contiene la lista de los centros de vacunación programadas según entidad y ubicación geográfica a nivel nacional del territorio peruano.</li>
+</ul>
+</li>
+<li><p><strong>Programacion de vacunas</strong></p></li>
+</ol>
+<ul>
+<li>
+<strong>Organization:</strong> Ministerio de Salud - MINSA</li>
+<li>
+<strong>Resources:</strong> 2 (data, xlsx)</li>
+<li>
+<strong>Size:</strong> 0.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2021-08-09</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> Esta tabla contiene la programación de la aplicación de las vacunas según centro de vacunación, fecha y edad rango de inicio y edad rango final de vacunación</li>
+</ul>
+<p>… (showing 10 of 42 datasets)</p>
+<hr>
+<p><strong>Access individual datasets:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section>
+</div>
+</section><section class="level3"><h4 id="geographic-data-from-inei">5. Geographic Data from INEI<a class="anchor" aria-label="anchor" href="#geographic-data-from-inei"></a>
+</h4>
 <p>Search for ubigeo (geographic codes) data from INEI:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Search for ubigeo data from INEI using both tags and organization</span></span>
 <span><span class="va">ubigeo</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>tags <span class="op">=</span> <span class="st">"ubigeo"</span>, organizations <span class="op">=</span> <span class="st">"INEI"</span><span class="op">)</span></span>
-<span><span class="va">ubigeo</span></span>
-<span><span class="va">ubigeo</span><span class="op">$</span><span class="va">datasets</span></span>
-<span><span class="va">ubigeo</span><span class="op">$</span><span class="va">resources</span></span>
-<span></span>
-<span><span class="co"># Download the ubigeo data</span></span>
-<span><span class="fu"><a href="../reference/po_get.html">po_get</a></span><span class="op">(</span><span class="va">ubigeo</span><span class="op">$</span><span class="va">resources</span><span class="op">)</span></span></code></pre></div>
-</div>
-</section><section class="level3"><h3 id="survey-data-analysis">6. Survey Data Analysis<a class="anchor" aria-label="anchor" href="#survey-data-analysis"></a>
+<span><span class="va">ubigeo</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-2">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-2"></a>
+</h2>
+<p><strong>Query:</strong> tags: ubigeo <strong>Found:</strong> 1 datasets with 4 resources <strong>Total size:</strong> 0 GB</p>
+<section class="level2"><h3 id="top-formats-2">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-2"></a>
 </h3>
+<ul>
+<li>
+<strong>csv</strong>: 1 files</li>
+<li>
+<strong>pdf</strong>: 1 files</li>
+<li>
+<strong>xlsx</strong>: 1 files</li>
+<li>
+<strong>zip</strong>: 1 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-2">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-2"></a>
+</h3>
+<ul>
+<li>
+<strong>Ubigeos (Códigos de Ubicación Geográfica) - [In…</strong> (Instituto Nacional de Estadística e Informática - INEI) [4 resources]</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section><div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ubigeo</span><span class="op">$</span><span class="va">datasets</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---datasets-1-total">Peru Open Data - Datasets (1 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---datasets-1-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>Ubigeos (Códigos de Ubicación Geográfica) - [Instituto Nacional de Estadística e Informática - INEI]</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Instituto Nacional de Estadística e Informática - INEI</li>
+<li>
+<strong>Resources:</strong> 4 (csv, pdf, xlsx, zip)</li>
+<li>
+<strong>Size:</strong> 0.2 MB</li>
+<li>
+<strong>Last updated:</strong> 2023-07-09</li>
+<li>
+<strong>Created:</strong> 2023-06-09</li>
+<li>
+<strong>Notes:</strong> I. CONCEPTO El Código de Ubicación Geográfica es el identificador numérico único que se asigna a cada ámbito político administrativo del país, en sus diferentes niveles, para identificar al departamento, provincia y distrito, a fin de permitir su enlace con las bases de datos que contienen información de los censos, encuestas y registros administrativos del Sistema Nacional de Estadística e Inf…</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p><strong>Access individual datasets:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section><div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ubigeo</span><span class="op">$</span><span class="va">resources</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---resources-4-total">Peru Open Data - Resources (4 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---resources-4-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>Norma del Código Ubigeo</strong> (0.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Ubigeos (Códigos de Ubicación Geográfica) - [Instituto Nacional de Estadística e Informática - INEI]</em>
+</li>
+<li>
+<strong>Format:</strong> PDF</li>
+<li>
+<strong>Last modified:</strong> 2023-06-09</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/NORMA_DEL_CODIGO_UBIGEO.pdf</li>
+<li>
+<strong>Description:</strong> Norma del Código Ubigeo</li>
+</ul>
+</li>
+<li>
+<p><strong>Data de muestra de los Ubigeos</strong> (&lt; 0.01 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Ubigeos (Códigos de Ubicación Geográfica) - [Instituto Nacional de Estadística e Informática - INEI]</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2023-06-09</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Data_Muestra_ubigeos.csv</li>
+<li>
+<strong>Description:</strong> Data de muestra de los Ubigeos</li>
+</ul>
+</li>
+<li>
+<p><strong>Data completa de los Ubigeos</strong> (&lt; 0.01 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Ubigeos (Códigos de Ubicación Geográfica) - [Instituto Nacional de Estadística e Informática - INEI]</em>
+</li>
+<li>
+<strong>Format:</strong> ZIP</li>
+<li>
+<strong>Last modified:</strong> 2023-06-09</li>
+<li>
+<strong>URL:</strong> https://www.inei.gob.pe/media/DATOS_ABIERTOS/UBIGEOS/UBIGEOS_2022_1891_distritos.zip</li>
+<li>
+<strong>Description:</strong> Data completa de los Ubigeos</li>
+</ul>
+</li>
+<li>
+<p><strong>Data Completa - Ubigeos</strong> (0.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Ubigeos (Códigos de Ubicación Geográfica) - [Instituto Nacional de Estadística e Informática - INEI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> 2023-07-09</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/UBIGEO%202022_1891%20distritos.xlsx</li>
+<li>
+<strong>Description:</strong> Data Completa - Ubigeos</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p><strong>Access individual resources:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section><div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Download the ubigeo data</span></span>
+<span><span class="fu"><a href="../reference/po_get.html">po_get</a></span><span class="op">(</span><span class="va">ubigeo</span><span class="op">$</span><span class="va">resources</span><span class="op">[</span><span class="fl">4</span>,<span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Processing 1 resources...</span></span>
+<span><span class="co">#&gt; Warning: Coercing text to numeric in F1530 / R1530C6: '1'</span></span>
+<span><span class="co">#&gt; Warning: Coercing text to numeric in F1531 / R1531C6: '2'</span></span>
+<span><span class="co">#&gt; Warning: Coercing text to numeric in F1532 / R1532C6: '2'</span></span>
+<span><span class="co">#&gt; Warning: Coercing text to numeric in F1533 / R1533C6: '1'</span></span>
+<span><span class="co">#&gt; Warning: Coercing text to numeric in F1534 / R1534C6: '2'</span></span>
+<span><span class="co">#&gt; Warning: Coercing text to numeric in F1535 / R1535C6: '2'</span></span>
+<span><span class="co">#&gt; # A tibble: 1,910 × 7</span></span>
+<span><span class="co">#&gt;    IDDIST NOMBDEP  NOMBPROV    NOMBDIST    NOM_CAPITAL..LEGAL. COD_.REG_NAT</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;                      &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 010101 AMAZONAS CHACHAPOYAS CHACHAPOYAS CHACHAPOYAS                    2</span></span>
+<span><span class="co">#&gt;  2 010102 AMAZONAS CHACHAPOYAS ASUNCION    ASUNCION                       2</span></span>
+<span><span class="co">#&gt;  3 010103 AMAZONAS CHACHAPOYAS BALSAS      BALSAS                         3</span></span>
+<span><span class="co">#&gt;  4 010104 AMAZONAS CHACHAPOYAS CHETO       CHETO                          2</span></span>
+<span><span class="co">#&gt;  5 010105 AMAZONAS CHACHAPOYAS CHILIQUIN   CHILIQUIN                      2</span></span>
+<span><span class="co">#&gt;  6 010106 AMAZONAS CHACHAPOYAS CHUQUIBAMBA CHUQUIBAMBA                    2</span></span>
+<span><span class="co">#&gt;  7 010107 AMAZONAS CHACHAPOYAS GRANADA     GRANADA                        2</span></span>
+<span><span class="co">#&gt;  8 010108 AMAZONAS CHACHAPOYAS HUANCAS     HUANCAS                        2</span></span>
+<span><span class="co">#&gt;  9 010109 AMAZONAS CHACHAPOYAS LA JALCA    LA JALCA                       2</span></span>
+<span><span class="co">#&gt; 10 010110 AMAZONAS CHACHAPOYAS LEIMEBAMBA  LEIMEBAMBA                     2</span></span>
+<span><span class="co">#&gt; # ℹ 1,900 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 1 more variable: REGION.NATURAL &lt;chr&gt;</span></span></code></pre></div>
+</div>
+</section><section class="level3"><h4 id="survey-data-analysis">6. Survey Data Analysis<a class="anchor" aria-label="anchor" href="#survey-data-analysis"></a>
+</h4>
 <p>Search for demographic survey data:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Search for ENDES (Demographic and Health Survey) data from INEI</span></span>
 <span><span class="va">endes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>query <span class="op">=</span> <span class="st">"ENDES"</span>, organizations <span class="op">=</span> <span class="st">"INEI"</span><span class="op">)</span></span>
-<span><span class="va">endes</span></span>
-<span><span class="va">endes</span><span class="op">$</span><span class="va">datasets</span></span></code></pre></div>
-</div>
-</section></section><section class="level2"><h2 id="interactive-data-exploration">Interactive Data Exploration<a class="anchor" aria-label="anchor" href="#interactive-data-exploration"></a>
+<span><span class="va">endes</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-3">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-3"></a>
 </h2>
-<p>Use <code><a href="../reference/po_explore.html">po_explore()</a></code> to get organized views of the data catalog:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># General exploration of all data</span></span>
-<span><span class="va">overview</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_explore.html">po_explore</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Explore health-related data specifically</span></span>
-<span><span class="va">health_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_explore.html">po_explore</a></span><span class="op">(</span><span class="st">"salud"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># See what organizations publish the most data</span></span>
-<span><span class="va">overview</span><span class="op">$</span><span class="va">by_organization</span></span>
-<span></span>
-<span><span class="co"># Find the most common file formats</span></span>
-<span><span class="va">overview</span><span class="op">$</span><span class="va">by_format</span></span></code></pre></div>
-</div>
-</section><section class="level2"><h2 id="advanced-search-features">Advanced Search Features<a class="anchor" aria-label="anchor" href="#advanced-search-features"></a>
-</h2>
-<section class="level3"><h3 id="format-specific-downloads">Format-specific Downloads<a class="anchor" aria-label="anchor" href="#format-specific-downloads"></a>
+<p><strong>Query:</strong> ENDES <strong>Found:</strong> 1 datasets with 5 resources <strong>Total size:</strong> 0.01 GB</p>
+<section class="level2"><h3 id="top-formats-3">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-3"></a>
 </h3>
+<ul>
+<li>
+<strong>pdf</strong>: 3 files</li>
+<li>
+<strong>csv</strong>: 1 files</li>
+<li>
+<strong>zip</strong>: 1 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-3">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-3"></a>
+</h3>
+<ul>
+<li>
+<strong>Encuesta Demográfica y de Salud Familiar (ENDES…</strong> (Instituto Nacional de Estadística e Informática - INEI) [5 resources]</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section><div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">endes</span><span class="op">$</span><span class="va">datasets</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---datasets-1-total-1">Peru Open Data - Datasets (1 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---datasets-1-total-1"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>Encuesta Demográfica y de Salud Familiar (ENDES) 2024 - [Instituto Nacional de Estadística e Informática - INEI]</strong></p>
+<ul>
+<li>
+<strong>Organization:</strong> Instituto Nacional de Estadística e Informática - INEI</li>
+<li>
+<strong>Resources:</strong> 5 (csv, pdf, zip)</li>
+<li>
+<strong>Size:</strong> 13.0 MB</li>
+<li>
+<strong>Last updated:</strong> 2025-02-06</li>
+<li>
+<strong>Created:</strong> [Unknown]</li>
+<li>
+<strong>Notes:</strong> La Encuesta Nacional Demográfica y de Salud Familiar tiene como objetivo: I. OBJETIVO: Proveer información actualizada sobre la dinámica demográfica, el estado de salud de las madres y niños menores de cinco años, así como brindar información sobre el estado y factores asociados a las enfermedades no transmisibles y transmisibles, así como el acceso a servicios de diagnóstico y tratamiento, inf…</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p><strong>Access individual datasets:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section>
+</div>
+</section></section><section class="section level3"><h3 id="advanced-search-features">Advanced Search Features<a class="anchor" aria-label="anchor" href="#advanced-search-features"></a>
+</h3>
+<section class="level3"><h4 id="format-specific-downloads">Format-specific Downloads<a class="anchor" aria-label="anchor" href="#format-specific-downloads"></a>
+</h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Find all CSV files about education</span></span>
 <span><span class="va">education_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"educacion"</span>, formats <span class="op">=</span> <span class="st">"CSV"</span><span class="op">)</span></span>
-<span></span>
+<span><span class="va">education_csv</span><span class="op">$</span><span class="va">resources</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---resources-7-total">Peru Open Data - Resources (7 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---resources-7-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>Postulantes de la Bolsa de Trabajo - [Ministerio de Trabajo y Promoción del Empleo - MTPE]</strong> (0.3 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Postulantes de la Bolsa de Trabajo - [Ministerio de Trabajo y Promoción del Empleo - MTPE]</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/DATA_POSTULANTE.csv</li>
+<li>
+<strong>Description:</strong> Postulantes de la Bolsa de Trabajo - [Ministerio de Trabajo y Promoción del Empleo - MTPE]</li>
+</ul>
+</li>
+<li>
+<p><strong>Promedio mensual de Remuneraciones Brutas (soles S/.) de Trabajadores en el Sector Privado por situación Educativo, según distritos - [Ministerio de Trabajo y Promoción del Empleo - MTPE]</strong> (0.2 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Promedio mensual de Remuneraciones Brutas (soles S/.) de Trabajadores en el Sector Privado por situación Educativo, según distritos - [Ministerio de Trabajo y Promoción del Empleo - MTPE]</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> 2023-05-04</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Dataset_Prom_Men_Rem_Educ_%202021.csv</li>
+<li>
+<strong>Description:</strong> Promedio mensual de Remuneraciones Brutas (soles S/.) de Trabajadores en el Sector Privado por situación Educativo, según distritos - [Ministerio de Trabajo y Promoción del Empleo - MTPE]</li>
+</ul>
+</li>
+<li>
+<p><strong>Listado de Instituciones de Educacion Especial (CEBE y PRITE)</strong> (&lt; 0.01 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Listado de Instituciones de Educacion Especial (CEBE y PRITE)</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> http://datos.minedu.gob.pe/dataset/distribucion-de-estudiantes-con-discapacidad-por-region</li>
+</ul>
+</li>
+<li>
+<p><strong>Educacion Inclusiva en el Peru</strong> (&lt; 0.01 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Educacion Inclusiva en el Peru</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> http://datos.minedu.gob.pe/dataset/educacion-inclusiva-en-el-peru</li>
+</ul>
+</li>
+<li>
+<p><strong>Videos sobre educacion inclusiva</strong> (&lt; 0.01 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Videos sobre educacion inclusiva</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> http://datos.minedu.gob.pe/dataset/videos-sobre-educacion-inclusiva</li>
+</ul>
+</li>
+<li>
+<p><strong>Numero de docentes de Educacion Basica por región</strong> (&lt; 0.01 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Numero de docentes de Educacion Basica por región</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> http://datos.minedu.gob.pe/dataset/numero-de-docentes-de-educacion-basica-por-region</li>
+</ul>
+</li>
+<li>
+<p><strong>Links referenciales sobre educacion inclusiva</strong> (&lt; 0.01 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Links referenciales sobre educacion inclusiva</em>
+</li>
+<li>
+<strong>Format:</strong> CSV</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> http://datos.minedu.gob.pe/dataset/links-referenciales-sobre-educacion-inclusiva</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p><strong>Access individual resources:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section><div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
 <span><span class="co"># Get only Excel files</span></span>
-<span><span class="va">excel_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"XLSX"</span>, <span class="st">"XLS"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">excel_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"educacion"</span>, formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"XLSX"</span>, <span class="st">"XLS"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">excel_data</span><span class="op">$</span><span class="va">resources</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data---resources-19-total">Peru Open Data - Resources (19 total)<a class="anchor" aria-label="anchor" href="#peru-open-data---resources-19-total"></a>
+</h2>
+<ol type="1">
+<li>
+<p><strong>Diccionario Datos - Postulantes</strong> (0.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Postulantes de la Bolsa de Trabajo - [Ministerio de Trabajo y Promoción del Empleo - MTPE]</em>
+</li>
+<li>
+<strong>Format:</strong> .XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Diccionario%20Datos%20-%20Postulantes.xlsx</li>
+<li>
+<strong>Description:</strong> Postulantes de la Bolsa de Trabajo - [Ministerio de Trabajo y Promoción del Empleo - MTPE]</li>
+</ul>
+</li>
+<li>
+<p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - I Trimestre 2018</strong> (0.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Base%20de%20Datos%20de%20las%20IPREDA%20-%20I%20Trimestre%202018.xlsx</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+</li>
+<li>
+<p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - II Trimestre 2018</strong> (0.2 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Directorio%20IPREDA%20-%20II%20Trimestre%202018.xls</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+</li>
+<li>
+<p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - III Trimestre 2018</strong> (0.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Base%20de%20datos%20IPREDA%20-%20III%20Trimestre%202018_0.xlsx</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+</li>
+<li>
+<p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - IV Trimestre 2018</strong> (0.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Base%20de%20Datos%20IPREDA%20-%20IV%20Trimestre%202018_0.xlsx</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+</li>
+<li>
+<p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - I Trimestre 2019</strong> (0.2 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Base%20de%20Datos%20IPREDA%20-%20I%20Trimestre%202019.xls</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+</li>
+<li>
+<p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - II Trimestre 2019</strong> (0.2 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Base%20de%20Datos%20IPREDA%20-%20II%20Trimestre%202019.xls</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+</li>
+<li>
+<p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - III Trimestre 2019</strong> (0.2 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Base%20de%20Datos%20IPREDA%20-%20III%20Trimestre%202019.xls</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+</li>
+<li>
+<p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - IV Trimestre 2019</strong> (0.1 MB)</p>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Base%20de%20Datos%20IPREDA%20IV%20Trimestre%202019.xls</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+</li>
+<li><p><strong>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - I Semestre 2020</strong> (0.1 MB)</p></li>
+</ol>
+<ul>
+<li>
+<strong>Dataset:</strong> <em>Base de Datos - Instituciones Privadas sin fines de lucro, Receptoras de donaciones de carácter Asistencial o Educacional provenientes del Exterior (IPREDA) - [Agencia Peruana de Cooperación Internacional - APCI]</em>
+</li>
+<li>
+<strong>Format:</strong> XLSX</li>
+<li>
+<strong>Last modified:</strong> [Unknown]</li>
+<li>
+<strong>URL:</strong> https://www.datosabiertos.gob.pe/sites/default/files/Base%20de%20Datos%20IPREDA%20-%20I%20Semestre%202020.xls</li>
+<li>
+<strong>Description:</strong> Depositario de las entidades privadas, tanto nacionales y extranjeras, que se encuentran inscritas en los registros de IPREDA que conduce la APCI</li>
+</ul>
+<p>… (showing 10 of 19 resources)</p>
+<hr>
+<p><strong>Access individual resources:</strong> <code>x[1]</code>, <code>x[2]</code>, etc. | <strong>Full tibble:</strong> <code>as_tibble(x)</code></p>
+</section>
 </div>
-</section><section class="level3"><h3 id="combined-search-criteria">Combined Search Criteria<a class="anchor" aria-label="anchor" href="#combined-search-criteria"></a>
-</h3>
+</section><section class="level3"><h4 id="combined-search-criteria">Combined Search Criteria<a class="anchor" aria-label="anchor" href="#combined-search-criteria"></a>
+</h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Find health datasets from MINSA in CSV format</span></span>
 <span><span class="va">health_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span></span>
 <span>  query <span class="op">=</span> <span class="st">"salud"</span>,</span>
 <span>  organizations <span class="op">=</span> <span class="st">"MINSA"</span>, </span>
 <span>  formats <span class="op">=</span> <span class="st">"CSV"</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Search by multiple tags</span></span>
-<span><span class="va">health_tags</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>tags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"salud"</span>, <span class="st">"epidemiologia"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</div>
-</section><section class="level3"><h3 id="save-files-locally">Save Files Locally<a class="anchor" aria-label="anchor" href="#save-files-locally"></a>
+<span><span class="va">health_csv</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-4">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-4"></a>
+</h2>
+<p><strong>Query:</strong> salud <strong>Found:</strong> 11 datasets with 56 resources <strong>Total size:</strong> 0.35 GB</p>
+<section class="level2"><h3 id="top-formats-4">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-4"></a>
 </h3>
+<ul>
+<li>
+<strong>csv</strong>: 56 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-4">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-4"></a>
+</h3>
+<ul>
+<li>
+<strong>Fallecidos, hospitalizados y vacunados por COVI…</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>
+<strong>Hospitalizados, vacunados y fallecidos por COVI…</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>
+<strong>MINSA - PADRON NOMINAL NIÑOS</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>
+<strong>MINSA - SALUD MENTAL</strong> (Ministerio de Salud - MINSA) [9 resources]</li>
+<li>
+<strong>MINSA - SALUD BUCAL</strong> (Ministerio de Salud - MINSA) [6 resources]</li>
+<li>… and 6 more datasets</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section><div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Search by multiple tags</span></span>
+<span><span class="va">health_tags</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>tags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"salud"</span>, <span class="st">"epidemiologia"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">health_tags</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-5">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-5"></a>
+</h2>
+<p><strong>Query:</strong> tags: salud, epidemiologia <strong>Found:</strong> 90 datasets with 527 resources <strong>Total size:</strong> 17.85 GB</p>
+<section class="level2"><h3 id="top-formats-5">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-5"></a>
+</h3>
+<ul>
+<li>
+<strong>csv</strong>: 191 files</li>
+<li>
+<strong>zip</strong>: 181 files</li>
+<li>
+<strong>pdf</strong>: 58 files</li>
+<li>
+<strong>docx</strong>: 34 files</li>
+<li>
+<strong>xlsx</strong>: 31 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-5">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-5"></a>
+</h3>
+<ul>
+<li>
+<strong>Datos de Afiliados al Seguro Integral de Salud …</strong> (Seguro Integral de Salud - SIS) [46 resources]</li>
+<li>
+<strong>Casos reportados de enfermedades metaxénicas en…</strong> (Gobierno Regional de Piura) [3 resources]</li>
+<li>
+<strong>Encuesta Demográfica y de Salud Familiar (ENDES…</strong> (Instituto Nacional de Estadística e Informática - INEI) [5 resources]</li>
+<li>
+<strong>Episodios de Infección Respiratoria Aguda (IRA)…</strong> (Gobierno Regional de Piura) [3 resources]</li>
+<li>
+<strong>Listado de cirugías de alta complejidad realiza…</strong> (Instituto Nacional de Enfermedades Neoplásicas) [3 resources]</li>
+<li>… and 85 more datasets</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section>
+</div>
+</section><section class="level3"><h4 id="save-files-locally">Save Files Locally<a class="anchor" aria-label="anchor" href="#save-files-locally"></a>
+</h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Download and save files to local directory</span></span>
 <span><span class="fu"><a href="../reference/po_get.html">po_get</a></span><span class="op">(</span><span class="st">"dataset-name"</span>, save_to <span class="op">=</span> <span class="st">"data/peru/"</span><span class="op">)</span></span></code></pre></div>
 </div>
-</section></section><section class="level2"><h2 id="common-use-cases">Common Use Cases<a class="anchor" aria-label="anchor" href="#common-use-cases"></a>
-</h2>
-<section class="level3"><h3 id="health-data-analysis">Health Data Analysis<a class="anchor" aria-label="anchor" href="#health-data-analysis"></a>
+</section></section><section class="section level3"><h3 id="common-use-cases">Common Use Cases<a class="anchor" aria-label="anchor" href="#common-use-cases"></a>
 </h3>
+<section class="level3"><h4 id="health-data-analysis">Health Data Analysis<a class="anchor" aria-label="anchor" href="#health-data-analysis"></a>
+</h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get all health datasets from MINSA</span></span>
-<span><span class="va">health_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>organizations <span class="op">=</span> <span class="st">"MINSA"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Find COVID-19 related data</span></span>
-<span><span class="va">covid_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"covid"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Get malaria surveillance data</span></span>
-<span><span class="va">malaria</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"malaria"</span>, formats <span class="op">=</span> <span class="st">"CSV"</span><span class="op">)</span></span></code></pre></div>
-</div>
-</section><section class="level3"><h3 id="economic-and-budget-data">Economic and Budget Data<a class="anchor" aria-label="anchor" href="#economic-and-budget-data"></a>
-</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Find budget execution data from MEF</span></span>
-<span><span class="va">budget_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>organizations <span class="op">=</span> <span class="st">"MEF"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Search for economic indicators</span></span>
-<span><span class="va">economic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"economico"</span><span class="op">)</span></span></code></pre></div>
-</div>
-</section><section class="level3"><h3 id="geographic-and-census-data">Geographic and Census Data<a class="anchor" aria-label="anchor" href="#geographic-and-census-data"></a>
-</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Get census data from INEI</span></span>
-<span><span class="va">census_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>organizations <span class="op">=</span> <span class="st">"INEI"</span>, tags <span class="op">=</span> <span class="st">"censo"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Find geographic boundary data</span></span>
-<span><span class="va">boundaries</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"limite"</span>, formats <span class="op">=</span> <span class="st">"SHP"</span><span class="op">)</span></span></code></pre></div>
-</div>
-</section></section><section class="level2"><h2 id="data-coverage">Data Coverage<a class="anchor" aria-label="anchor" href="#data-coverage"></a>
+<span><span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>organizations <span class="op">=</span> <span class="st">"MINSA"</span><span class="op">)</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-6">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-6"></a>
 </h2>
+<p><strong>Query:</strong> (all data) <strong>Found:</strong> 42 datasets with 137 resources <strong>Total size:</strong> 0.44 GB</p>
+<section class="level2"><h3 id="top-formats-6">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-6"></a>
+</h3>
+<ul>
+<li>
+<strong>csv</strong>: 56 files</li>
+<li>
+<strong>data</strong>: 32 files</li>
+<li>
+<strong>xlsx</strong>: 26 files</li>
+<li>
+<strong>pdf</strong>: 13 files</li>
+<li>****: 5 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-6">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-6"></a>
+</h3>
+<ul>
+<li>
+<strong>CENAN-INS VIGILANCIA DEL ESTADO NUTRICIONAL DE …</strong> (Ministerio de Salud - MINSA) [1 resources]</li>
+<li>
+<strong>Catálogo de Fabricante de Vacunas</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>
+<strong>SINADEF: Certificado Defunciones</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>
+<strong>Vacunación contra COVID - 19 [Ministerio de Sal…</strong> (Ministerio de Salud - MINSA) [3 resources]</li>
+<li>
+<strong>Modelo Entidad Relación de los datasets del MIN…</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>… and 37 more datasets</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section><div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Find COVID-19 related data</span></span>
+<span><span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"covid"</span><span class="op">)</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-7">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-7"></a>
+</h2>
+<p><strong>Query:</strong> covid <strong>Found:</strong> 43 datasets with 285 resources <strong>Total size:</strong> 1.73 GB</p>
+<section class="level2"><h3 id="top-formats-7">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-7"></a>
+</h3>
+<ul>
+<li>
+<strong>csv</strong>: 117 files</li>
+<li>
+<strong>zip</strong>: 99 files</li>
+<li>
+<strong>data</strong>: 22 files</li>
+<li>
+<strong>xlsx</strong>: 17 files</li>
+<li>
+<strong>url</strong>: 9 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-7">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-7"></a>
+</h3>
+<ul>
+<li>
+<strong>Contrataciones ante la Emergencia Sanitaria por…</strong> (Organismo Especializado para las Contrataciones Públicas Eficientes - OECE) [5 resources]</li>
+<li>
+<strong>Catálogo de Fabricante de Vacunas</strong> (Ministerio de Salud - MINSA) [2 resources]</li>
+<li>
+<strong>Anemia</strong> (NA) [6 resources]</li>
+<li>
+<strong>Encuesta VIANEV 2021. Hábitos y consumo de alim…</strong> (Instituto Nacional de Salud) [1 resources]</li>
+<li>
+<strong>Dataset de Pruebas Moleculares del Instituto Na…</strong> (Instituto Nacional de Salud) [96 resources]</li>
+<li>… and 38 more datasets</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section><div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Get malaria surveillance data</span></span>
+<span> <span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"malaria"</span>, formats <span class="op">=</span> <span class="st">"CSV"</span><span class="op">)</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-8">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-8"></a>
+</h2>
+<p><strong>Query:</strong> malaria <strong>Found:</strong> 1 datasets with 2 resources <strong>Total size:</strong> 0.06 GB</p>
+<section class="level2"><h3 id="top-formats-8">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-8"></a>
+</h3>
+<ul>
+<li>
+<strong>csv</strong>: 2 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-8">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-8"></a>
+</h3>
+<ul>
+<li>
+<strong>Vigilancia epidemiológica de Malaria</strong> (NA) [2 resources]</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section>
+</div>
+</section><section class="level3"><h4 id="economic-and-budget-data">Economic and Budget Data<a class="anchor" aria-label="anchor" href="#economic-and-budget-data"></a>
+</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Find budget execution data from MEF</span></span>
+<span><span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span>organizations <span class="op">=</span> <span class="st">"MEF"</span><span class="op">)</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-9">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-9"></a>
+</h2>
+<p><strong>Query:</strong> (all data) <strong>Found:</strong> 65 datasets with 383 resources <strong>Total size:</strong> 0 GB</p>
+<section class="level2"><h3 id="top-formats-9">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-9"></a>
+</h3>
+<ul>
+<li>
+<strong>url</strong>: 380 files</li>
+<li>
+<strong>data</strong>: 3 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-9">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-9"></a>
+</h3>
+<ul>
+<li>
+<strong>Comparación de Presupuesto y Ejecución de Gasto</strong> (Ministerio de Economía y Finanzas - MEF) [4 resources]</li>
+<li>
+<strong>Presupuesto y Ejecución de Gasto</strong> (Ministerio de Economía y Finanzas - MEF) [17 resources]</li>
+<li>
+<strong>Registro Nacional de las MYPE acreedoras del Es…</strong> (Ministerio de Economía y Finanzas - MEF) [2 resources]</li>
+<li>
+<strong>Presupuesto y Ejecución de Gasto – Devengado Tr…</strong> (Ministerio de Economía y Finanzas - MEF) [11 resources]</li>
+<li>
+<strong>Servicio de deuda - Deuda proyectada</strong> (Ministerio de Economía y Finanzas - MEF) [2 resources]</li>
+<li>… and 60 more datasets</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section><div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Search for economic indicators</span></span>
+<span><span class="fu"><a href="../reference/po_search.html">po_search</a></span><span class="op">(</span><span class="st">"economico"</span><span class="op">)</span></span></code></pre></div>
+<section class="level1 cell-output-display"><h2 id="peru-open-data-search-results-10">Peru Open Data Search Results<a class="anchor" aria-label="anchor" href="#peru-open-data-search-results-10"></a>
+</h2>
+<p><strong>Query:</strong> economico <strong>Found:</strong> 7 datasets with 21 resources <strong>Total size:</strong> 0.41 GB</p>
+<section class="level2"><h3 id="top-formats-10">Top formats<a class="anchor" aria-label="anchor" href="#top-formats-10"></a>
+</h3>
+<ul>
+<li>
+<strong>csv</strong>: 11 files</li>
+<li>
+<strong>docx</strong>: 3 files</li>
+<li>
+<strong>xlsx</strong>: 3 files</li>
+<li>****: 2 files</li>
+<li>
+<strong>data</strong>: 1 files</li>
+</ul></section><section class="level2"><h3 id="sample-datasets-10">Sample datasets<a class="anchor" aria-label="anchor" href="#sample-datasets-10"></a>
+</h3>
+<ul>
+<li>
+<strong>Cooperativas a nivel nacional - [Ministerio de …</strong> (Ministerio de la Producción - PRODUCE) [4 resources]</li>
+<li>
+<strong>Mujeres Conductoras de Unidades Económicas MIPY…</strong> (Ministerio de la Producción - PRODUCE) [5 resources]</li>
+<li>
+<strong>Licencia de funcionamiento</strong> (Ministerio de Desarrollo Agrario y Riego - MIDAGRI) [1 resources]</li>
+<li>
+<strong>SITUACION DE LAS LICENCIAS DE FUNCIONAMIENTO GE…</strong> (Municipalidad Distrital Mariano Melgar) [3 resources]</li>
+<li>
+<strong>Ordenes de compra y servicios Institucionales -…</strong> (Servicio Nacional de Certificación Ambiental para las Inversiones Sostenibles – SENACE) [3 resources]</li>
+<li>… and 2 more datasets</li>
+</ul>
+<hr>
+<p><strong>Access data with:</strong> <code>$datasets</code>, <code>$resources</code>, <code>$summary</code></p>
+</section></section>
+</div>
+</section></section><section class="section level3"><h3 id="data-coverage">Data Coverage<a class="anchor" aria-label="anchor" href="#data-coverage"></a>
+</h3>
 <p>Peru’s open data portal includes datasets from:</p>
 <ul>
 <li>
@@ -260,8 +1806,8 @@
 <strong>283+ organizations</strong> total</li>
 </ul>
 <p>The portal contains approximately 1.7 TB of data across all resources.</p>
-</section><section class="level2"><h2 id="getting-help">Getting Help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
-</h2>
+</section><section class="section level3"><h3 id="getting-help">Getting Help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
+</h3>
 <ul>
 <li>Use <code>?function_name</code> for help with specific functions</li>
 <li>Browse the <a href="https://horaciochacon.github.io/peruopen/reference/">function reference</a>
