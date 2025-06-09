@@ -263,13 +263,13 @@ detect_best_encoding <- function(file_path, format_lower) {
     message("  Best encoding: ", best_encoding, " (score: ", best_score, ")")
   }
 
-  return(best_encoding)
+  best_encoding
 }
 
 # Helper function to fix common encoding issues in data frames
 fix_encoding_issues <- function(df) {
   if (!is.data.frame(df)) {
-    return(df)
+    df
   }
 
   # Common encoding fixes for Spanish text
@@ -306,7 +306,7 @@ fix_encoding_issues <- function(df) {
     }
   }
 
-  return(df)
+  df
 }
 
 #' Get the download URL for a resource
@@ -331,7 +331,7 @@ get_resource_cache_dir <- function() {
   if (!dir.exists(resource_cache_dir)) {
     dir.create(resource_cache_dir, recursive = TRUE)
   }
-  return(resource_cache_dir)
+  resource_cache_dir
 }
 
 get_cached_resource_path <- function(resource_id, format = NULL) {
@@ -401,10 +401,10 @@ cache_resource_file <- function(resource_id, source_path, resource_meta) {
       cached_at = Sys.time()
     )
     saveRDS(meta_data, cache_paths$meta)
-    return(cache_paths$file)
+    cache_paths$file
   } else {
     warning("Failed to cache resource file")
-    return(source_path)
+    source_path
   }
 }
 

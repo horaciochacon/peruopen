@@ -554,7 +554,7 @@ get_cache_dir <- function() {
   if (!dir.exists(cache_dir)) {
     dir.create(cache_dir, recursive = TRUE)
   }
-  return(cache_dir)
+  cache_dir
 }
 
 get_cached_catalog <- function() {
@@ -571,7 +571,7 @@ get_cached_catalog <- function() {
     }
   }
 
-  return(NULL)
+  NULL
 }
 
 cache_catalog <- function(catalog) {
@@ -1292,7 +1292,7 @@ process_multiple_resources <- function(resource_ids,
     return(results[[1]])
   }
 
-  return(results)
+  results
 }
 
 # Helper function to select best resource

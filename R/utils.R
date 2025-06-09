@@ -118,7 +118,7 @@ format_peru_date <- function(date_string) {
     },
     error = function(e) {
       # If parsing fails, return original
-      return(date_string)
+      date_string
     }
   )
 }
@@ -176,7 +176,7 @@ clean_email <- function(email) {
     return(tolower(email))
   }
 
-  return(NA_character_)
+  NA_character_
 }
 
 parse_formatted_size <- function(size_string) {
@@ -229,5 +229,5 @@ parse_formatted_size <- function(size_string) {
     1 # default to bytes if unknown (including empty string)
   )
 
-  return(round(number * multiplier))
+  round(number * multiplier)
 }

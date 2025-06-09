@@ -185,7 +185,7 @@ clean_email <- function(email) {
     return(tolower(trimws(email)))
   }
 
-  return(NA_character_)
+  NA_character_
 }
 
 extract_organization_info <- function(groups_data) {
@@ -199,12 +199,12 @@ extract_organization_info <- function(groups_data) {
   }
 
   org <- groups_data[[1]]
-  return(list(
+  list(
     id = org$id %||% NA_character_,
     name = clean_string(org$name %||% NA_character_),
     title = clean_string(org$title %||% NA_character_),
     description = clean_string(org$description %||% NA_character_)
-  ))
+  )
 }
 
 extract_and_clean_tags <- function(tags_data, clean_text = TRUE) {
@@ -308,7 +308,7 @@ parse_file_size <- function(size_string) {
     ))
   }
 
-  return(list(bytes = NA_integer_, unit = NA_character_, formatted = size_string))
+  list(bytes = NA_integer_, unit = NA_character_, formatted = size_string)
 }
 
 apply_filters_to_nested <- function(results_list, query = NULL, tags = NULL, organizations = NULL) {
