@@ -1,4 +1,4 @@
-# peruopen <img src="man/figures/logo.png" align="right" height="139" />
+# peruopen <img src="man/figures/logo.png" align="right" height="280" />
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/horaciochacon/peruopen/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/horaciochacon/peruopen/actions/workflows/R-CMD-check.yaml)
