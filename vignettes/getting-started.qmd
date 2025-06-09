@@ -12,12 +12,13 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = TRUE
+  eval = requireNamespace("peruopen", quietly = TRUE)
 )
 ```
 
 ```{r}
 #| label: setup
+#| eval: !expr requireNamespace("peruopen", quietly = TRUE)
 library(peruopen)
 ```
 
