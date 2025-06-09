@@ -363,9 +363,9 @@ is_resource_cache_valid <- function(resource_id, resource_meta = NULL) {
     cached_meta <- readRDS(cache_paths$meta)
 
     if (!is.null(resource_meta) &&
-      !is.null(resource_meta$last_modified) &&
-      !is.na(resource_meta$last_modified) &&
-      resource_meta$last_modified != "") {
+          !is.null(resource_meta$last_modified) &&
+          !is.na(resource_meta$last_modified) &&
+          resource_meta$last_modified != "") {
       cached_last_modified <- cached_meta$last_modified %||% ""
 
       if (cached_last_modified != resource_meta$last_modified) {

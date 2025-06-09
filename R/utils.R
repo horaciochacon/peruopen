@@ -33,7 +33,7 @@ extract_tags_from_metadata <- function(metadata_list) {
   all_tags[!is.na(all_tags)]
 }
 
-extract_organizations_from_metadata <- function(metadata_list) {
+extract_orgs_from_metadata <- function(metadata_list) {
   if (length(metadata_list) == 0) {
     return(character(0))
   }
