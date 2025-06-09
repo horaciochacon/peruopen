@@ -12,7 +12,7 @@ catalog <- po_catalog(target_size = 100, verbose = FALSE)
 
 # Look for resources with Spanish-related names
 spanish_resources <- catalog$resources %>%
-  filter(grepl("Peru|año|información|salud|educación|niño|población", 
+  filter(grepl("Peru|año|información|salud|educación|niño|población",
                resource_name, ignore.case = TRUE)) %>%
   slice_head(n = 3)
 
@@ -29,49 +29,49 @@ cat("\nFound", nrow(spanish_resources), "resources to test encoding\n")
 for (i in seq_len(min(2, nrow(spanish_resources)))) {
   resource <- spanish_resources[i, ]
   cat("\n--- Testing Resource:", resource$resource_name, "---\n")
-  
+
   # Test 1: Auto-detection (should work best now)
   cat("1. Auto-detection encoding:\n")
   tryCatch({
     data_auto <- po_get(resource$resource_id, encoding = "auto", verbose = FALSE)
-    
+
     # Check for Spanish characters in the data
     text_content <- paste(unlist(data_auto), collapse = " ")
     spanish_chars <- sum(grepl("[ñáéíóúÑÁÉÍÓÚ]", text_content))
     corrupted_chars <- sum(grepl("[ï¿½�]", text_content))
-    
+
     cat("   Spanish chars found:", spanish_chars, "\n")
     cat("   Corrupted chars found:", corrupted_chars, "\n")
     cat("   Success:", spanish_chars > 0 && corrupted_chars == 0, "\n")
   }, error = function(e) {
     cat("   Error:", e$message, "\n")
   })
-  
+
   # Test 2: Windows-1252 (often best for Spanish text)
   cat("2. Windows-1252 encoding:\n")
   tryCatch({
     data_win <- po_get(resource$resource_id, encoding = "Windows-1252", verbose = FALSE)
-    
+
     text_content <- paste(unlist(data_win), collapse = " ")
     spanish_chars <- sum(grepl("[ñáéíóúÑÁÉÍÓÚ]", text_content))
     corrupted_chars <- sum(grepl("[ï¿½�]", text_content))
-    
+
     cat("   Spanish chars found:", spanish_chars, "\n")
     cat("   Corrupted chars found:", corrupted_chars, "\n")
     cat("   Success:", spanish_chars > 0 && corrupted_chars == 0, "\n")
   }, error = function(e) {
     cat("   Error:", e$message, "\n")
   })
-  
+
   # Test 3: ISO-8859-1
   cat("3. ISO-8859-1 encoding:\n")
   tryCatch({
     data_iso <- po_get(resource$resource_id, encoding = "ISO-8859-1", verbose = FALSE)
-    
+
     text_content <- paste(unlist(data_iso), collapse = " ")
     spanish_chars <- sum(grepl("[ñáéíóúÑÁÉÍÓÚ]", text_content))
     corrupted_chars <- sum(grepl("[ï¿½�]", text_content))
-    
+
     cat("   Spanish chars found:", spanish_chars, "\n")
     cat("   Corrupted chars found:", corrupted_chars, "\n")
     cat("   Success:", spanish_chars > 0 && corrupted_chars == 0, "\n")

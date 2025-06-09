@@ -34,7 +34,7 @@ health_search <- po_search("salud", formats = "CSV", verbose = FALSE)
 if (nrow(health_search$resources) > 0) {
   health_resources <- health_search$resources %>% slice_head(n = 2)
   health_data <- po_get(health_resources, verbose = TRUE)
-  
+
   cat("\nDownloaded from search results:", length(health_data), "files\n")
 }
 
@@ -52,7 +52,7 @@ if (nrow(spanish_resource) > 0) {
   data_utf8 <- po_get(spanish_resource$resource_id, encoding = "UTF-8", verbose = FALSE)
   data_latin1 <- po_get(spanish_resource$resource_id, encoding = "Latin1", verbose = FALSE)
   data_auto <- po_get(spanish_resource$resource_id, encoding = "auto", verbose = FALSE)
-  
+
   cat("\nTested encodings for:", spanish_resource$resource_name, "\n")
   cat("- UTF-8: success\n")
   cat("- Latin1: success\n")
@@ -73,10 +73,10 @@ excel_resources <- catalog$resources %>%
   slice_head(n = 2)
 
 if (nrow(excel_resources) > 0) {
-  saved_data <- po_get(excel_resources$resource_id, 
-                      save_to = temp_dir, 
-                      verbose = TRUE)
-  
+  saved_data <- po_get(excel_resources$resource_id,
+                       save_to = temp_dir,
+                       verbose = TRUE)
+
   # List saved files
   saved_files <- list.files(temp_dir, full.names = TRUE)
   cat("\nSaved files:\n")
@@ -91,9 +91,9 @@ cat("\n=== Feature 5: Dataset download with save ===\n")
 
 # Get a dataset (will pick best resource) and save it
 dataset_name <- catalog$datasets$dataset_name[1]
-dataset_data <- po_get(dataset_name, 
-                      save_to = temp_dir,
-                      verbose = TRUE)
+dataset_data <- po_get(dataset_name,
+                       save_to = temp_dir,
+                       verbose = TRUE)
 
 cat("\nDataset downloaded and saved successfully\n")
 
