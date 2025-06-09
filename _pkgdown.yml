@@ -46,6 +46,10 @@ reference:
   - print.po_resources
   - as_tibble.po_datasets
   - as_tibble.po_resources
+  - knit_print.po_search_result
+  - knit_print.po_explore_result
+  - knit_print.po_datasets
+  - knit_print.po_resources
 
 articles:
 - title: Getting Started
