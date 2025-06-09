@@ -1,7 +1,7 @@
 Package: peruopen
 Type: Package
 Title: Access Peru's Open Data Portal (CKAN)
-Version: 0.0.0.9000
+Version: 0.1.0
 Author: Horacio Chacón-Torrico <hchacont@uw.edu> [aut, cre]
 Maintainer: Horacio Chacón-Torrico <hchacont@uw.edu>
 Authors@R: c(
