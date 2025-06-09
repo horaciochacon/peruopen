@@ -11,25 +11,24 @@
 #' @keywords internal
 # Internal utility function
 po_catalog_rebuild <- function(target_size = 3000, verbose = TRUE) {
-  
   if (verbose) {
     cat("REBUILDING CATALOG FROM SCRATCH\n")
     cat("Target size:", target_size, "datasets\n")
     cat("This avoids extension caching issues\n")
     cat("=====================================\n\n")
   }
-  
+
   # Clear cache to start fresh
   clear_cache()
-  
+
   # Build catalog with target size
   catalog <- po_catalog(target_size = target_size, verbose = verbose)
-  
+
   if (verbose) {
     cat("\n\u2705 REBUILD COMPLETE\n")
     cat("Final size:", catalog$summary$n_datasets, "datasets\n")
     cat("Coverage:", round(100 * catalog$summary$n_datasets / 3954), "%\n")
   }
-  
+
   return(catalog)
 }

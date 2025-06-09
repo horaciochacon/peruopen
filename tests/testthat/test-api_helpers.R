@@ -1,6 +1,6 @@
 test_that("ckan_request handles basic requests", {
   skip_if_no_ckan()
-  
+
   expect_no_error({
     result <- ckan_request("site_read")
   })
@@ -8,7 +8,7 @@ test_that("ckan_request handles basic requests", {
 
 test_that("ckan_get_packages returns character vector", {
   skip_if_no_ckan()
-  
+
   packages <- ckan_get_packages()
   expect_type(packages, "character")
   expect_gt(length(packages), 0)

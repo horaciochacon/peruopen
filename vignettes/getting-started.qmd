@@ -107,7 +107,7 @@ ubigeo$datasets
 ubigeo$resources
 
 # Download the ubigeo data
-po_get(ubigeo$resources[4,])
+po_get(ubigeo$resources[4, ])
 ```
 
 ### 6. Survey Data Analysis
@@ -141,7 +141,7 @@ excel_data$resources
 # Find health datasets from MINSA in CSV format
 health_csv <- po_search(
   query = "salud",
-  organizations = "MINSA", 
+  organizations = "MINSA",
   formats = "CSV"
 )
 health_csv
@@ -170,7 +170,7 @@ po_search(organizations = "MINSA")
 po_search("covid")
 
 # Get malaria surveillance data
- po_search("malaria", formats = "CSV")
+po_search("malaria", formats = "CSV")
 ```
 
 ### Economic and Budget Data

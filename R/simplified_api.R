@@ -1,7 +1,7 @@
 #' Get searchable catalog of Peru open data with smart loading
 #'
 #' @description
-#' Downloads and returns a catalog of datasets and resources from Peru's open 
+#' Downloads and returns a catalog of datasets and resources from Peru's open
 #' data portal. Uses intelligent chunked loading to handle API limitations.
 #' Can get partial or complete catalogs based on target size.
 #'
@@ -9,7 +9,7 @@
 #' @param verbose Logical. Show progress messages (default TRUE)
 #' @param target_size Integer. Number of datasets to fetch (default NULL = try all 3954)
 #' @param extend_existing Logical. Add more data to existing catalog (default FALSE)
-#' 
+#'
 #' @return A list containing:
 #' \describe{
 #'   \item{datasets}{Tibble with all datasets and summary information}
@@ -22,217 +22,313 @@
 #' \dontrun{
 #' # Get a working subset (1000-1500 datasets)
 #' catalog <- po_catalog(target_size = 1500)
-#' 
+#'
 #' # Get more coverage progressively
 #' catalog <- po_catalog(target_size = 2500)
-#' 
+#'
 #' # Try to get everything (may timeout)
 #' catalog <- po_catalog()
-#' 
+#'
 #' # Extend existing catalog with more data
 #' more_catalog <- po_catalog(target_size = 3000, extend_existing = TRUE)
-#' 
+#'
 #' # Find all CSV files under 50MB
 #' csv_files <- catalog$resources %>%
 #'   filter(format == "CSV", size_mb < 50)
-#' 
+#'
 #' # Find datasets by organization
 #' minsa_data <- catalog$datasets %>%
 #'   filter(grepl("MINSA", organization))
 #' }
-po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, extend_existing = FALSE) {
-  
+po_catalog <- function(refresh = FALSE,
+                       verbose = TRUE,
+                       target_size = NULL,
+                       extend_existing = FALSE) {
   # Check cache first
   if (!refresh && !extend_existing) {
     cached <- get_cached_catalog()
     if (!is.null(cached)) {
-      if (verbose) message("Using cached catalog (", format(attr(cached, "cached_at"), "%Y-%m-%d %H:%M"), ")")
-      
+      if (verbose) {
+        message("Using cached catalog (",
+                format(attr(cached, "cached_at"), "%Y-%m-%d %H:%M"),
+                ")")
+      }
+
       # If user wants more data than cached, continue loading
-      if (!is.null(target_size) && cached$summary$n_datasets < target_size) {
-        if (verbose) message("Cached catalog has ", cached$summary$n_datasets, " datasets, extending to ", target_size)
+      if (!is.null(target_size) &&
+          cached$summary$n_datasets < target_size) {
+        if (verbose) {
+          message(
+            "Cached catalog has ",
+            cached$summary$n_datasets,
+            " datasets, extending to ",
+            target_size
+          )
+        }
         extend_existing <- TRUE
       } else {
         return(cached)
       }
     }
   }
-  
+
   # Determine starting point and target
   start_offset <- 0
   existing_data <- list()
-  
+
   if (extend_existing) {
     cached <- get_cached_catalog()
     if (!is.null(cached)) {
       # Convert cached data back to raw format for processing
-      if (verbose) message("Extending existing catalog from ", cached$summary$n_datasets, " datasets")
+      if (verbose) {
+        message(
+          "Extending existing catalog from ",
+          cached$summary$n_datasets,
+          " datasets"
+        )
+      }
       start_offset <- cached$summary$n_datasets
       # We'll merge at the end
     }
   }
-  
+
   # Set intelligent target size based on API testing
   if (is.null(target_size)) {
-    target_size <- 3954  # Try full catalog first
+    target_size <- 3954 # Try full catalog first
   }
-  
+
   if (verbose) {
     if (start_offset > 0) {
-      message("Extending catalog from ", start_offset, " to ", target_size, " datasets...")
+      message(
+        "Extending catalog from ",
+        start_offset,
+        " to ",
+        target_size,
+        " datasets..."
+      )
     } else {
-      message("Building catalog with target: ", target_size, " datasets...")
+      message(
+        "Building catalog with target: ",
+        target_size,
+        " datasets..."
+      )
     }
   }
-  
+
   # Strategy 1: Try single large request (original approach)
   if (start_offset == 0 && target_size <= 1000) {
-    if (verbose) message("Attempting single request for ", target_size, " datasets...")
-    
-    single_result <- tryCatch({
-      data <- ckan_get_current_packages_with_resources(limit = target_size, offset = 0)
-      list(success = TRUE, data = data)
-    }, error = function(e) {
-      if (verbose) message("Single request failed: ", e$message)
-      list(success = FALSE)
-    })
-    
+    if (verbose) {
+      message("Attempting single request for ", target_size, " datasets...")
+    }
+
+    single_result <- tryCatch(
+      {
+        data <- ckan_get_packages_resources(limit = target_size, offset = 0)
+        list(success = TRUE, data = data)
+      },
+      error = function(e) {
+        if (verbose) {
+          message("Single request failed: ", e$message)
+        }
+        list(success = FALSE)
+      }
+    )
+
     if (single_result$success) {
       all_datasets <- single_result$data
-      if (verbose) message("✓ Single request succeeded: ", length(all_datasets), " datasets")
+      if (verbose) {
+        message(
+          "✓ Single request succeeded: ",
+          length(all_datasets),
+          " datasets"
+        )
+      }
     }
   }
-  
+
   # Strategy 2: Chunked loading (if single request failed or for large targets)
-  if (!exists("all_datasets") || (exists("all_datasets") && length(all_datasets) == 0)) {
-    if (verbose) message("Using chunked loading approach...")
-    
+  if (!exists("all_datasets") ||
+    (exists("all_datasets") && length(all_datasets) == 0)) {
+    if (verbose) {
+      message("Using chunked loading approach...")
+    }
+
     all_datasets <- list()
     current_offset <- start_offset
-    
+
     # Smart batch sizing based on API testing
     if (current_offset < 500) {
-      batch_size <- 250  # Safe size for early offsets
+      batch_size <- 250 # Safe size for early offsets
     } else if (current_offset < 1000) {
-      batch_size <- 200  # Smaller for middle range
+      batch_size <- 200 # Smaller for middle range
     } else {
-      batch_size <- 150  # Very conservative for high offsets
+      batch_size <- 150 # Very conservative for high offsets
     }
-    
+
     max_batches <- ceiling((target_size - start_offset) / batch_size)
     successful_batches <- 0
     failed_attempts <- 0
-    
+
     for (batch_num in 1:max_batches) {
-      if (length(all_datasets) + start_offset >= target_size) break
-      
+      if (length(all_datasets) + start_offset >= target_size) {
+        break
+      }
+
       remaining <- target_size - (length(all_datasets) + start_offset)
       current_batch_size <- min(batch_size, remaining)
-      
+
       if (verbose) {
-        cat("Batch", batch_num, ": fetching", current_batch_size, "datasets (offset:", current_offset, ")\n")
+        cat(
+          "Batch",
+          batch_num,
+          ": fetching",
+          current_batch_size,
+          "datasets (offset:",
+          current_offset,
+          ")\n"
+        )
       }
-      
+
       # Progressive delay for API stability
       if (current_offset > 0 && batch_num > 1) {
         delay <- min(2 + (current_offset / 500), 10)
-        if (verbose) cat("  Waiting", round(delay, 1), "seconds for API stability...\n")
+        if (verbose) {
+          cat(
+            "  Waiting",
+            round(delay, 1),
+            "seconds for API stability...\n"
+          )
+        }
         Sys.sleep(delay)
       }
-      
+
       start_time <- Sys.time()
-      
-      batch_result <- tryCatch({
-        batch_data <- ckan_get_current_packages_with_resources(
-          limit = current_batch_size,
-          offset = current_offset
-        )
-        
-        elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-        
-        if (verbose) {
-          cat("  ✓ SUCCESS: Got", length(batch_data), "datasets in", round(elapsed, 1), "seconds\n")
+
+      batch_result <- tryCatch(
+        {
+          batch_data <- ckan_get_packages_resources(limit = current_batch_size, offset = current_offset)
+
+          elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
+
+          if (verbose) {
+            cat(
+              "  ✓ SUCCESS: Got",
+              length(batch_data),
+              "datasets in",
+              round(elapsed, 1),
+              "seconds\n"
+            )
+          }
+
+          list(success = TRUE, data = batch_data)
+        },
+        error = function(e) {
+          elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
+
+          if (verbose) {
+            cat("  ✗ FAILED after", round(elapsed, 1), "seconds\n")
+          }
+
+          list(success = FALSE, error = e$message)
         }
-        
-        list(success = TRUE, data = batch_data)
-        
-      }, error = function(e) {
-        elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-        
-        if (verbose) {
-          cat("  ✗ FAILED after", round(elapsed, 1), "seconds\n")
-        }
-        
-        list(success = FALSE, error = e$message)
-      })
-      
+      )
+
       if (batch_result$success) {
         all_datasets <- append(all_datasets, batch_result$data)
         current_offset <- current_offset + length(batch_result$data)
         successful_batches <- successful_batches + 1
         failed_attempts <- 0
-        
+
         # Stop if we got fewer items than requested (end of data)
         if (length(batch_result$data) < current_batch_size) {
-          if (verbose) cat("  → Reached end of available data\n")
+          if (verbose) {
+            cat("  → Reached end of available data\n")
+          }
           break
         }
-        
       } else {
         failed_attempts <- failed_attempts + 1
-        
+
         if (failed_attempts >= 2) {
-          if (verbose) cat("  → Too many failures, stopping with", length(all_datasets), "new datasets\n")
+          if (verbose) {
+            cat(
+              "  → Too many failures, stopping with",
+              length(all_datasets),
+              "new datasets\n"
+            )
+          }
           break
         }
-        
+
         # Try with smaller batch
-        if (verbose) cat("  → Retrying with smaller batch...\n")
+        if (verbose) {
+          cat("  → Retrying with smaller batch...\n")
+        }
         Sys.sleep(5)
-        retry_result <- tryCatch({
-          smaller_data <- ckan_get_current_packages_with_resources(
-            limit = max(50, current_batch_size / 2),
-            offset = current_offset
-          )
-          list(success = TRUE, data = smaller_data)
-        }, error = function(e) {
-          list(success = FALSE)
-        })
-        
+        retry_result <- tryCatch(
+          {
+            smaller_data <- ckan_get_packages_resources(
+              limit = max(50, current_batch_size / 2),
+              offset = current_offset
+            )
+            list(success = TRUE, data = smaller_data)
+          },
+          error = function(e) {
+            list(success = FALSE)
+          }
+        )
+
         if (retry_result$success) {
           all_datasets <- append(all_datasets, retry_result$data)
           current_offset <- current_offset + length(retry_result$data)
-          if (verbose) cat("  ✓ Retry succeeded with", length(retry_result$data), "datasets\n")
+          if (verbose) {
+            cat(
+              "  ✓ Retry succeeded with",
+              length(retry_result$data),
+              "datasets\n"
+            )
+          }
         }
       }
     }
-    
+
     total_new <- length(all_datasets)
     total_with_existing <- total_new + start_offset
-    
+
     if (verbose) {
       message("\nChunked loading complete:")
       message("  New datasets fetched: ", total_new)
       message("  Total datasets: ", total_with_existing)
-      message("  Coverage: ~", round(100 * total_with_existing / 3954), "% of Peru open data")
-      message("  Successful batches: ", successful_batches, "/", max_batches)
+      message(
+        "  Coverage: ~",
+        round(100 * total_with_existing / 3954),
+        "% of Peru open data"
+      )
+      message(
+        "  Successful batches: ",
+        successful_batches,
+        "/",
+        max_batches
+      )
     }
   }
-  
+
   # If extending existing catalog, merge with cached data
   if (extend_existing && start_offset > 0) {
     cached <- get_cached_catalog()
     if (!is.null(cached) && length(all_datasets) > 0) {
-      if (verbose) message("Merging new data with existing catalog...")
-      
+      if (verbose) {
+        message("Merging new data with existing catalog...")
+      }
+
       # Convert cached datasets back to raw format for processing
       cached_raw <- list()
       for (i in 1:nrow(cached$datasets)) {
         dataset_row <- cached$datasets[i, ]
-        
+
         # Get resources for this dataset
         dataset_resources <- cached$resources[cached$resources$dataset_id == dataset_row$dataset_id, ]
-        
+
         # Reconstruct raw format
         resources_list <- list()
         if (nrow(dataset_resources) > 0) {
@@ -242,7 +338,8 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
               id = res_row$resource_id,
               name = res_row$resource_name,
               format = res_row$format,
-              size = res_row$size_mb * 1024 * 1024,  # Convert back to bytes
+              size = res_row$size_mb * 1024 * 1024,
+              # Convert back to bytes
               url = res_row$url,
               description = res_row$description,
               created = res_row$created,
@@ -250,20 +347,22 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
             )
           }
         }
-        
+
         # Reconstruct tags
         tags_list <- list()
         if (!is.na(dataset_row$tags) && dataset_row$tags != "") {
           tag_names <- strsplit(dataset_row$tags, ", ")[[1]]
-          tags_list <- lapply(tag_names, function(tag) list(name = tag))
+          tags_list <- lapply(tag_names, function(tag) {
+            list(name = tag)
+          })
         }
-        
+
         # Reconstruct groups (organization)
         groups_list <- list()
         if (!is.na(dataset_row$organization)) {
           groups_list <- list(list(title = dataset_row$organization))
         }
-        
+
         cached_raw[[i]] <- list(
           id = dataset_row$dataset_id,
           name = dataset_row$dataset_name,
@@ -276,50 +375,67 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
           groups = groups_list
         )
       }
-      
+
       # Combine cached data with new data
       all_datasets <- c(cached_raw, all_datasets)
-      if (verbose) message("Combined ", length(cached_raw), " cached + ", length(all_datasets) - length(cached_raw), " new = ", length(all_datasets), " total datasets")
+      if (verbose) {
+        message(
+          "Combined ",
+          length(cached_raw),
+          " cached + ",
+          length(all_datasets) - length(cached_raw),
+          " new = ",
+          length(all_datasets),
+          " total datasets"
+        )
+      }
     }
   }
-  
+
   total_fetched <- length(all_datasets)
-  
+
   if (total_fetched == 0) {
     stop("Could not fetch any datasets - API may be temporarily unavailable")
   }
-  
+
   # Process into clean tibbles
-  if (verbose) message("Processing catalog structure...")
-  
+  if (verbose) {
+    message("Processing catalog structure...")
+  }
+
   datasets_list <- vector("list", length(all_datasets))
   resources_list <- vector("list", length(all_datasets))
-  
+
   for (i in seq_along(all_datasets)) {
     pkg <- all_datasets[[i]]
-    
+
     # Extract organization
-    org_name <- if (!is.null(pkg$groups) && length(pkg$groups) > 0) {
+    org_name <- if (!is.null(pkg$groups) &&
+      length(pkg$groups) > 0) {
       clean_string(pkg$groups[[1]]$title %||% NA_character_, TRUE)
     } else {
       NA_character_
     }
-    
+
     # Extract tags
     tags <- if (!is.null(pkg$tags) && length(pkg$tags) > 0) {
-      paste(sapply(pkg$tags, function(x) x$name %||% ""), collapse = ", ")
+      paste(sapply(pkg$tags, function(x) {
+        x$name %||% ""
+      }), collapse = ", ")
     } else {
       ""
     }
-    
+
     # Calculate resource summary
     resources <- pkg$resources %||% list()
     n_resources <- length(resources)
-    
+
     if (n_resources > 0) {
-      formats <- unique(sapply(resources, function(r) r$format %||% "Unknown"))
+      formats <- unique(sapply(resources, function(r) {
+        r$format %||% "Unknown"
+      }))
       formats_str <- paste(sort(formats), collapse = ", ")
-      
+
       # Calculate total size
       sizes <- sapply(resources, function(r) {
         size <- r$size %||% 0
@@ -330,7 +446,9 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
           # If already numeric, assume it's bytes
           size <- as.numeric(size)
         }
-        if (is.na(size)) size <- 0
+        if (is.na(size)) {
+          size <- 0
+        }
         size
       })
       total_size_mb <- round(sum(sizes) / 1024 / 1024, 2)
@@ -338,11 +456,11 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
       formats_str <- ""
       total_size_mb <- 0
     }
-    
+
     # Clean dates
     last_updated <- format_peru_date(pkg$metadata_modified %||% NA_character_)
     created <- format_peru_date(pkg$metadata_created %||% NA_character_)
-    
+
     # Dataset record
     datasets_list[[i]] <- list(
       dataset_id = pkg$id %||% NA_character_,
@@ -357,13 +475,13 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
       last_updated = last_updated,
       notes = clean_html_text(pkg$notes %||% NA_character_, TRUE)
     )
-    
+
     # Resource records
     if (n_resources > 0) {
       res_list <- vector("list", n_resources)
       for (j in seq_along(resources)) {
         res <- resources[[j]]
-        
+
         # Calculate size in MB
         size_bytes <- res$size %||% 0
         # Parse formatted size strings like "26.96 MB", "1.5 KB", etc.
@@ -372,9 +490,11 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
         } else if (is.numeric(size_bytes)) {
           size_bytes <- as.numeric(size_bytes)
         }
-        if (is.na(size_bytes)) size_bytes <- 0
+        if (is.na(size_bytes)) {
+          size_bytes <- 0
+        }
         size_mb <- round(size_bytes / 1024 / 1024, 2)
-        
+
         res_list[[j]] <- list(
           resource_id = res$id %||% NA_character_,
           dataset_id = pkg$id %||% NA_character_,
@@ -392,15 +512,15 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
       resources_list[[i]] <- res_list
     }
   }
-  
+
   # Convert to tibbles
   datasets <- dplyr::bind_rows(datasets_list)
   resources <- dplyr::bind_rows(unlist(resources_list, recursive = FALSE))
-  
+
   # Add custom classes for pretty printing
   class(datasets) <- c("po_datasets", class(datasets))
   class(resources) <- c("po_resources", class(resources))
-  
+
   # Calculate summary statistics
   summary <- list(
     n_datasets = nrow(datasets),
@@ -412,26 +532,28 @@ po_catalog <- function(refresh = FALSE, verbose = TRUE, target_size = NULL, exte
     last_updated = Sys.time(),
     catalog_date = max(datasets$last_updated, na.rm = TRUE)
   )
-  
+
   # Create result
   result <- list(
     datasets = datasets,
     resources = resources,
     summary = summary
   )
-  
+
   # Cache the result
   cache_catalog(result)
-  
+
   if (verbose) {
     message("\nCatalog summary:")
     message("  - Datasets: ", format(summary$n_datasets, big.mark = ","))
     message("  - Resources: ", format(summary$n_resources, big.mark = ","))
     message("  - Total size: ", summary$total_size_gb, " GB")
     message("  - Organizations: ", summary$n_organizations)
-    message("  - Formats: ", paste(names(head(summary$formats, 5)), collapse = ", "))
+    message("  - Formats: ", paste(names(head(
+      summary$formats, 5
+    )), collapse = ", "))
   }
-  
+
   return(result)
 }
 
@@ -447,7 +569,7 @@ get_cache_dir <- function() {
 get_cached_catalog <- function() {
   cache_dir <- get_cache_dir()
   cache_file <- file.path(cache_dir, "complete_catalog.rds")
-  
+
   if (file.exists(cache_file)) {
     # Check if cache is still fresh (6 hours)
     cache_age <- difftime(Sys.time(), file.info(cache_file)$mtime, units = "hours")
@@ -457,7 +579,7 @@ get_cached_catalog <- function() {
       return(catalog)
     }
   }
-  
+
   return(NULL)
 }
 
@@ -495,55 +617,67 @@ cache_catalog <- function(catalog) {
 #' \dontrun{
 #' # Search everything related to COVID
 #' covid_data <- po_search("covid")
-#' 
+#'
 #' # Find all CSV files about dengue
 #' dengue_csv <- po_search("dengue", formats = "CSV")
-#' 
+#'
 #' # Get all resources from MINSA
 #' minsa <- po_search(organizations = "MINSA", type = "resources")
-#' 
+#'
 #' # Search by specific tags
 #' health_data <- po_search(tags = c("salud", "medicina"))
-#' 
+#'
 #' # Search only in tag fields (not titles/descriptions)
 #' tag_only <- po_search("covid", search_tags_only = TRUE)
-#' 
+#'
 #' # Just search for resources directly
 #' csv_files <- po_search(type = "resources", formats = "CSV")
 #' }
-po_search <- function(query = NULL, 
-                     tags = NULL,
-                     type = c("all", "datasets", "resources"),
-                     formats = NULL,
-                     organizations = NULL,
-                     search_tags_only = FALSE,
-                     use_cache = TRUE,
-                     verbose = FALSE) {
-  
+po_search <- function(query = NULL,
+                      tags = NULL,
+                      type = c("all", "datasets", "resources"),
+                      formats = NULL,
+                      organizations = NULL,
+                      search_tags_only = FALSE,
+                      use_cache = TRUE,
+                      verbose = FALSE) {
   type <- match.arg(type)
-  
+
   # For performance, use existing efficient search for simple queries
   # Only build full catalog for complex multi-filter searches
-  is_simple_query <- is.null(formats) && is.null(organizations) && is.null(tags) && !search_tags_only && type == "all"
-  
+  is_simple_query <- is.null(formats) &&
+    is.null(organizations) &&
+    is.null(tags) && !search_tags_only && type == "all"
+
   # Skip the "efficient search" path for now - it doesn't search all fields
   # Always use the full catalog search to ensure complete results
-  
+
   # For complex queries or when simple search fails, use full catalog
-  if (verbose) message("Building complete catalog for complex search...")
-  catalog <- tryCatch({
-    po_catalog(refresh = !use_cache, verbose = verbose)
-  }, error = function(e) {
-    # If catalog building fails, fall back to simple search
-    if (verbose) message("Catalog building failed, using simple search")
-    return(NULL)
-  })
-  
+  if (verbose) {
+    message("Building complete catalog for complex search...")
+  }
+  catalog <- tryCatch(
+    {
+      po_catalog(refresh = !use_cache, verbose = verbose)
+    },
+    error = function(e) {
+      # If catalog building fails, fall back to simple search
+      if (verbose) {
+        message("Catalog building failed, using simple search")
+      }
+      return(NULL)
+    }
+  )
+
   if (is.null(catalog)) {
     # Fallback to simple search
     if (!is.null(query)) {
-      simple_result <- po_search_datasets(query = query, limit = 100, clean_text = TRUE)
-      
+      simple_result <- po_search_datasets(
+        query = query,
+        limit = 100,
+        clean_text = TRUE
+      )
+
       # Convert to new format
       summary <- list(
         query = query,
@@ -553,7 +687,7 @@ po_search <- function(query = NULL,
         formats_found = table(character(0)),
         organizations_found = unique(simple_result$organization[!is.na(simple_result$organization)])
       )
-      
+
       # Create minimal resources tibble
       resources <- tibble::tibble(
         resource_id = character(0),
@@ -563,60 +697,57 @@ po_search <- function(query = NULL,
         format = character(0),
         size_mb = numeric(0)
       )
-      
+
       # Add custom classes for pretty printing
       class(simple_result) <- c("po_datasets", class(simple_result))
       class(resources) <- c("po_resources", class(resources))
-      
+
       result <- list(
         datasets = simple_result,
         resources = resources,
         summary = summary
       )
-      
+
       class(result) <- c("po_search_result", "list")
       return(result)
     } else {
       stop("Unable to search: API connection failed and no query provided")
     }
   }
-  
+
   # Start with full catalog
   datasets <- catalog$datasets
   resources <- catalog$resources
-  
+
   # Apply query filter if provided
   if (!is.null(query) && query != "") {
-    pattern <- paste0("(?i)", gsub("([.*+?^${}()|\\[\\]\\\\])", "\\\\\\1", query))
-    
+    pattern <- paste0(
+      "(?i)",
+      gsub("([.*+?^${}()|\\[\\]\\\\])", "\\\\\\1", query)
+    )
+
     if (search_tags_only) {
       # Search only in tag fields
-      dataset_matches <- datasets$dataset_id[
-        grepl(pattern, datasets$tags, perl = TRUE)
-      ]
+      dataset_matches <- datasets$dataset_id[grepl(pattern, datasets$tags, perl = TRUE)]
       # Resources don't have separate tag fields, so only search datasets
       resource_dataset_matches <- character(0)
     } else {
       # Search in all fields (default behavior)
-      dataset_matches <- datasets$dataset_id[
-        grepl(pattern, datasets$title, perl = TRUE) |
+      dataset_matches <- datasets$dataset_id[grepl(pattern, datasets$title, perl = TRUE) |
         grepl(pattern, datasets$notes, perl = TRUE) |
         grepl(pattern, datasets$organization, perl = TRUE) |
         grepl(pattern, datasets$tags, perl = TRUE) |
-        grepl(pattern, datasets$dataset_name, perl = TRUE)
-      ]
-      
+        grepl(pattern, datasets$dataset_name, perl = TRUE)]
+
       # Search in resources
-      resource_dataset_matches <- unique(resources$dataset_id[
-        grepl(pattern, resources$resource_name, perl = TRUE) |
+      resource_dataset_matches <- unique(resources$dataset_id[grepl(pattern, resources$resource_name, perl = TRUE) |
         grepl(pattern, resources$description, perl = TRUE) |
-        grepl(pattern, resources$dataset_title, perl = TRUE)
-      ])
+        grepl(pattern, resources$dataset_title, perl = TRUE)])
     }
-    
+
     # Combine matches
     all_matching_ids <- unique(c(dataset_matches, resource_dataset_matches))
-    
+
     # Filter based on search type
     if (type == "datasets") {
       datasets <- datasets[datasets$dataset_id %in% dataset_matches, ]
@@ -631,40 +762,38 @@ po_search <- function(query = NULL,
       resources <- resources[resources$dataset_id %in% all_matching_ids, ]
     }
   }
-  
+
   # Apply explicit tags filter if provided
   if (!is.null(tags) && length(tags) > 0) {
     # Create pattern for any of the specified tags
     tags_pattern <- paste0("(?i)(", paste(sapply(tags, function(x) {
       gsub("([.*+?^${}()|\\[\\]\\\\])", "\\\\\\1", x)
     }), collapse = "|"), ")")
-    
+
     # Filter datasets that have any of the specified tags
-    tag_matching_ids <- datasets$dataset_id[
-      grepl(tags_pattern, datasets$tags, perl = TRUE)
-    ]
-    
+    tag_matching_ids <- datasets$dataset_id[grepl(tags_pattern, datasets$tags, perl = TRUE)]
+
     datasets <- datasets[datasets$dataset_id %in% tag_matching_ids, ]
     resources <- resources[resources$dataset_id %in% tag_matching_ids, ]
   }
-  
+
   # Apply format filter
   if (!is.null(formats)) {
     format_pattern <- paste0("(?i)(", paste(formats, collapse = "|"), ")")
     matching_resources <- resources[grepl(format_pattern, resources$format, perl = TRUE), ]
     matching_dataset_ids <- unique(matching_resources$dataset_id)
-    
+
     datasets <- datasets[datasets$dataset_id %in% matching_dataset_ids, ]
     resources <- matching_resources
   }
-  
+
   # Apply organization filter
   if (!is.null(organizations)) {
     org_pattern <- paste0("(?i)(", paste(organizations, collapse = "|"), ")")
     datasets <- datasets[grepl(org_pattern, datasets$organization, perl = TRUE), ]
     resources <- resources[resources$dataset_id %in% datasets$dataset_id, ]
   }
-  
+
   # Calculate summary
   search_description <- if (!is.null(query) && !is.null(tags)) {
     paste0("'", query, "' + tags: ", paste(tags, collapse = ", "))
@@ -679,11 +808,11 @@ po_search <- function(query = NULL,
   } else {
     "(all data)"
   }
-  
+
   # Add custom classes for pretty printing
   class(datasets) <- c("po_datasets", class(datasets))
   class(resources) <- c("po_resources", class(resources))
-  
+
   summary <- list(
     query = search_description,
     search_tags_only = search_tags_only,
@@ -694,15 +823,15 @@ po_search <- function(query = NULL,
     formats_found = sort(table(resources$format), decreasing = TRUE),
     organizations_found = sort(unique(datasets$organization[!is.na(datasets$organization)]))
   )
-  
+
   result <- list(
     datasets = datasets,
     resources = resources,
     summary = summary
   )
-  
+
   class(result) <- c("po_search_result", "list")
-  
+
   return(result)
 }
 
@@ -713,9 +842,11 @@ po_search <- function(query = NULL,
 print.po_search_result <- function(x, ...) {
   cli::cli_h1("Peru Open Data Search Results")
   cli::cli_text("Query: {cli::col_cyan(x$summary$query)}")
-  cli::cli_text("Found: {cli::col_green(x$summary$n_datasets)} datasets with {cli::col_green(x$summary$n_resources)} resources")
+  cli::cli_text(
+    "Found: {cli::col_green(x$summary$n_datasets)} datasets with {cli::col_green(x$summary$n_resources)} resources"
+  )
   cli::cli_text("Total size: {cli::col_yellow(paste0(x$summary$total_size_gb, ' GB'))}")
-  
+
   if (length(x$summary$formats_found) > 0) {
     cli::cli_h2("Top formats")
     top_formats <- head(x$summary$formats_found, 5)
@@ -723,7 +854,7 @@ print.po_search_result <- function(x, ...) {
       cli::cli_text("  {cli::col_blue(names(top_formats)[i])}: {top_formats[i]} files")
     }
   }
-  
+
   if (x$summary$n_datasets > 0) {
     cli::cli_h2("Sample datasets")
     sample_data <- head(x$datasets[, c("title", "organization", "n_resources")], 5)
@@ -733,14 +864,18 @@ print.po_search_result <- function(x, ...) {
       } else {
         sample_data$title[i]
       }
-      cli::cli_text("  {cli::symbol$bullet} {cli::style_bold(title_truncated)} ({cli::col_magenta(sample_data$organization[i])}) [{cli::col_green(sample_data$n_resources[i])} resources]")
+      cli::cli_text(
+        "  {cli::symbol$bullet} {cli::style_bold(title_truncated)} ({cli::col_magenta(sample_data$organization[i])}) [{cli::col_green(sample_data$n_resources[i])} resources]"
+      )
     }
-    
+
     if (x$summary$n_datasets > 5) {
-      cli::cli_text("  {cli::col_silver('... and')} {cli::col_green(x$summary$n_datasets - 5)} {cli::col_silver('more datasets')}")
+      cli::cli_text(
+        "  {cli::col_silver('... and')} {cli::col_green(x$summary$n_datasets - 5)} {cli::col_silver('more datasets')}"
+      )
     }
   }
-  
+
   cli::cli_rule()
   cli::cli_text("{cli::col_blue('Access data with:')} $datasets, $resources, $summary")
   invisible(x)
@@ -773,33 +908,33 @@ print.po_search_result <- function(x, ...) {
 #' \dontrun{
 #' # Get data using dataset name
 #' malaria <- po_get("malaria-2024")
-#' 
+#'
 #' # Get metadata only
 #' info <- po_get("malaria-2024", what = "info")
-#' 
+#'
 #' # Get specific resource by ID
 #' data <- po_get("abc-123-resource-id")
-#' 
+#'
 #' # Get multiple resources
 #' resources <- po_get(c("resource-id-1", "resource-id-2"))
-#' 
+#'
 #' # Get resources from catalog/search results
 #' catalog <- po_catalog()
 #' csv_resources <- catalog$resources %>% filter(format == "CSV")
 #' all_csv_data <- po_get(csv_resources)
-#' 
+#'
 #' # Save files locally with original names
 #' data <- po_get("dataset-name", save_to = "data/peru/")
-#' 
+#'
 #' # Force specific encoding for Spanish characters
 #' data <- po_get("resource-id", encoding = "Windows-1252")
 #' data <- po_get("resource-id", encoding = "ISO-8859-1")
-#' 
+#'
 #' # Cache control examples
-#' data <- po_get("resource-id")  # Uses cache if available
-#' data <- po_get("resource-id", use_cache = FALSE)  # Force fresh download
+#' data <- po_get("resource-id") # Uses cache if available
+#' data <- po_get("resource-id", use_cache = FALSE) # Force fresh download
 #' }
-po_get <- function(identifier, 
+po_get <- function(identifier,
                    what = c("data", "info", "all"),
                    format = NULL,
                    clean_names = TRUE,
@@ -807,13 +942,12 @@ po_get <- function(identifier,
                    encoding = c("UTF-8", "Latin1", "Windows-1252", "ISO-8859-1", "auto"),
                    use_cache = TRUE,
                    verbose = TRUE) {
-  
   what <- match.arg(what)
   encoding <- match.arg(encoding)
-  
+
   # Get catalog for lookups
   catalog <- po_catalog(verbose = FALSE)
-  
+
   # Check if identifier is a tibble/data.frame
   if (is.data.frame(identifier)) {
     # Extract resource IDs from tibble
@@ -827,36 +961,60 @@ po_get <- function(identifier,
     } else {
       stop("Tibble must contain a 'resource_id' column")
     }
-    
+
     # Process multiple resources
-    return(process_multiple_resources(resource_ids, resource_names, what, clean_names, 
-                                     save_to, encoding, use_cache, verbose, catalog))
+    return(
+      process_multiple_resources(
+        resource_ids,
+        resource_names,
+        what,
+        clean_names,
+        save_to,
+        encoding,
+        use_cache,
+        verbose,
+        catalog
+      )
+    )
   }
-  
+
   # Check if multiple identifiers provided as vector
   if (length(identifier) > 1) {
     # Process multiple resources
-    return(process_multiple_resources(identifier, identifier, what, clean_names, 
-                                     save_to, encoding, use_cache, verbose, catalog))
+    return(
+      process_multiple_resources(
+        identifier,
+        identifier,
+        what,
+        clean_names,
+        save_to,
+        encoding,
+        use_cache,
+        verbose,
+        catalog
+      )
+    )
   }
-  
+
   # Single identifier processing (original logic)
   identifier <- identifier[1]
-  
+
   # Check if it's a resource ID
   is_resource <- identifier %in% catalog$resources$resource_id
-  
+
   if (is_resource) {
     # Handle resource directly
     resource_info <- catalog$resources[catalog$resources$resource_id == identifier, ]
-    
+
     if (what == "info") {
       return(as.list(resource_info))
     }
-    
+
     # Load the resource
-    if (verbose) message("Loading resource: ", resource_info$resource_name)
-    
+    if (verbose) {
+      message("Loading resource: ", resource_info$resource_name)
+    }
+
     # Prepare save path if requested
     save_path <- NULL
     if (!is.null(save_to)) {
@@ -871,16 +1029,26 @@ po_get <- function(identifier,
       }
       save_path <- file.path(save_to, filename)
     }
-    
-    data <- tryCatch({
-      po_load_resource(identifier, clean_names = clean_names, encoding = encoding, path = save_path, use_cache = use_cache)
-    }, error = function(e) {
-      stop("Failed to load resource: ", e$message)
-    })
-    
+
+    data <- tryCatch(
+      {
+        po_load_resource(
+          identifier,
+          clean_names = clean_names,
+          encoding = encoding,
+          path = save_path,
+          use_cache = use_cache
+        )
+      },
+      error = function(e) {
+        stop("Failed to load resource: ", e$message)
+      }
+    )
+
     if (what == "data") {
       return(data)
-    } else {  # what == "all"
+    } else {
+      # what == "all"
       return(list(
         data = data,
         info = as.list(resource_info),
@@ -888,51 +1056,66 @@ po_get <- function(identifier,
       ))
     }
   }
-  
+
   # It's a dataset identifier (name or ID)
   # Try to find by name first, then by ID
   dataset <- catalog$datasets[catalog$datasets$dataset_name == identifier, ]
   if (nrow(dataset) == 0) {
     dataset <- catalog$datasets[catalog$datasets$dataset_id == identifier, ]
   }
-  
+
   if (nrow(dataset) == 0) {
     # Try partial matching on name
-    matches <- grep(identifier, catalog$datasets$dataset_name, ignore.case = TRUE, value = FALSE)
+    matches <- grep(
+      identifier,
+      catalog$datasets$dataset_name,
+      ignore.case = TRUE,
+      value = FALSE
+    )
     if (length(matches) == 1) {
       dataset <- catalog$datasets[matches, ]
-      if (verbose) message("Found dataset by partial match: ", dataset$dataset_name)
+      if (verbose) {
+        message("Found dataset by partial match: ", dataset$dataset_name)
+      }
     } else if (length(matches) > 1) {
-      stop("Multiple datasets match '", identifier, "'. Please be more specific.\nMatches: ", 
-           paste(catalog$datasets$dataset_name[matches], collapse = ", "))
+      stop(
+        "Multiple datasets match '",
+        identifier,
+        "'. Please be more specific.\nMatches: ",
+        paste(catalog$datasets$dataset_name[matches], collapse = ", ")
+      )
     } else {
       stop("No dataset found with identifier: ", identifier)
     }
   }
-  
+
   # Get resources for this dataset
   dataset_resources <- catalog$resources[catalog$resources$dataset_id == dataset$dataset_id, ]
-  
+
   if (nrow(dataset_resources) == 0) {
     stop("Dataset has no resources available: ", dataset$title)
   }
-  
+
   if (what == "info") {
-    return(list(
-      dataset = as.list(dataset),
-      resources = dataset_resources
-    ))
+    return(list(dataset = as.list(dataset), resources = dataset_resources))
   }
-  
+
   # Select best resource for download
   selected_resource <- select_best_resource(dataset_resources, format, verbose)
-  
+
   if (verbose) {
     message("Dataset: ", dataset$title)
-    message("Downloading: ", selected_resource$resource_name, " (", selected_resource$format, ", ", 
-            selected_resource$size_mb, " MB)")
+    message(
+      "Downloading: ",
+      selected_resource$resource_name,
+      " (",
+      selected_resource$format,
+      ", ",
+      selected_resource$size_mb,
+      " MB)"
+    )
   }
-  
+
   # Prepare save path if requested
   save_path <- NULL
   if (!is.null(save_to)) {
@@ -947,66 +1130,84 @@ po_get <- function(identifier,
     }
     save_path <- file.path(save_to, filename)
   }
-  
+
   # Load the data
-  data <- tryCatch({
-    po_load_resource(selected_resource$resource_id, clean_names = clean_names, 
-                    encoding = encoding, path = save_path, use_cache = use_cache)
-  }, error = function(e) {
-    stop("Failed to load data: ", e$message)
-  })
-  
+  data <- tryCatch(
+    {
+      po_load_resource(
+        selected_resource$resource_id,
+        clean_names = clean_names,
+        encoding = encoding,
+        path = save_path,
+        use_cache = use_cache
+      )
+    },
+    error = function(e) {
+      stop("Failed to load data: ", e$message)
+    }
+  )
+
   if (what == "data") {
     return(data)
-  } else {  # what == "all"
-    return(list(
-      data = data,
-      dataset_info = as.list(dataset),
-      resource_info = as.list(selected_resource),
-      all_resources = dataset_resources
-    ))
+  } else {
+    # what == "all"
+    return(
+      list(
+        data = data,
+        dataset_info = as.list(dataset),
+        resource_info = as.list(selected_resource),
+        all_resources = dataset_resources
+      )
+    )
   }
 }
 
 # Helper function to process multiple resources
-process_multiple_resources <- function(resource_ids, resource_names, what, clean_names, 
-                                     save_to, encoding, use_cache, verbose, catalog) {
+process_multiple_resources <- function(resource_ids,
+                                       resource_names,
+                                       what,
+                                       clean_names,
+                                       save_to,
+                                       encoding,
+                                       use_cache,
+                                       verbose,
+                                       catalog) {
   n_resources <- length(resource_ids)
-  
+
   if (n_resources == 0) {
     stop("No resource IDs provided")
   }
-  
+
   if (verbose) {
     message("Processing ", n_resources, " resources...")
   }
-  
+
   # Initialize results list
   results <- list()
-  
+
   # Process each resource
   for (i in seq_along(resource_ids)) {
     resource_id <- resource_ids[i]
     resource_name <- resource_names[i]
-    
+
     if (verbose && n_resources > 1) {
       message("\n[", i, "/", n_resources, "] Processing: ", resource_name)
     }
-    
+
     # Get resource info
     resource_info <- catalog$resources[catalog$resources$resource_id == resource_id, ]
-    
+
     if (nrow(resource_info) == 0) {
       warning("Resource not found in catalog: ", resource_id)
       results[[resource_name]] <- list(error = "Resource not found")
       next
     }
-    
+
     if (what == "info") {
       results[[resource_name]] <- as.list(resource_info)
       next
     }
-    
+
     # Prepare save path if requested
     save_path <- NULL
     if (!is.null(save_to)) {
@@ -1021,45 +1222,63 @@ process_multiple_resources <- function(resource_ids, resource_names, what, clean
       }
       save_path <- file.path(save_to, filename)
     }
-    
+
     # Try to load the resource
-    result <- tryCatch({
-      data <- po_load_resource(resource_id, clean_names = clean_names, 
-                              encoding = encoding, path = save_path, use_cache = use_cache)
-      
-      if (what == "data") {
-        data
-      } else {  # what == "all"
-        list(
-          data = data,
-          info = as.list(resource_info),
-          dataset_info = as.list(catalog$datasets[catalog$datasets$dataset_id == resource_info$dataset_id, ])
+    result <- tryCatch(
+      {
+        data <- po_load_resource(
+          resource_id,
+          clean_names = clean_names,
+          encoding = encoding,
+          path = save_path,
+          use_cache = use_cache
         )
+
+        if (what == "data") {
+          data
+        } else {
+          # what == "all"
+          list(
+            data = data,
+            info = as.list(resource_info),
+            dataset_info = as.list(catalog$datasets[catalog$datasets$dataset_id == resource_info$dataset_id, ])
+          )
+        }
+      },
+      error = function(e) {
+        warning("Failed to load resource '", resource_name, "': ", e$message)
+        list(error = e$message)
       }
-    }, error = function(e) {
-      warning("Failed to load resource '", resource_name, "': ", e$message)
-      list(error = e$message)
-    })
-    
+    )
+
     results[[resource_name]] <- result
   }
-  
+
   if (verbose && n_resources > 1) {
-    successful <- sum(sapply(results, function(x) is.null(x[["error"]])))
-    message("\nCompleted: ", successful, "/", n_resources, " resources loaded successfully")
+    successful <- sum(sapply(results, function(x) {
+      is.null(x[["error"]])
+    }))
+    message(
+      "\nCompleted: ",
+      successful,
+      "/",
+      n_resources,
+      " resources loaded successfully"
+    )
   }
-  
+
   # If only one resource, return it directly (not as a list)
   if (n_resources == 1) {
     return(results[[1]])
   }
-  
+
   return(results)
 }
 
 # Helper function to select best resource
-select_best_resource <- function(resources, preferred_format = NULL, verbose = TRUE) {
-  
+select_best_resource <- function(resources,
+                                 preferred_format = NULL,
+                                 verbose = TRUE) {
   # If specific format requested
   if (!is.null(preferred_format)) {
     format_matches <- resources[toupper(resources$format) == toupper(preferred_format), ]
@@ -1067,13 +1286,19 @@ select_best_resource <- function(resources, preferred_format = NULL, verbose = T
       # Return the most recent one
       return(format_matches[order(format_matches$last_modified, decreasing = TRUE)[1], ])
     } else {
-      if (verbose) warning("Format '", preferred_format, "' not available. Selecting best alternative.")
+      if (verbose) {
+        warning(
+          "Format '",
+          preferred_format,
+          "' not available. Selecting best alternative."
+        )
+      }
     }
   }
-  
+
   # Priority order for formats
   format_priority <- c("CSV", "XLSX", "XLS", "JSON", "ZIP", "TXT")
-  
+
   # Find best format available
   for (fmt in format_priority) {
     matches <- resources[toupper(resources$format) == fmt, ]
@@ -1082,7 +1307,7 @@ select_best_resource <- function(resources, preferred_format = NULL, verbose = T
       return(matches[order(matches$last_modified, decreasing = TRUE)[1], ])
     }
   }
-  
+
   # If no preferred formats found, return the most recent resource
   return(resources[order(resources$last_modified, decreasing = TRUE)[1], ])
 }
@@ -1112,95 +1337,133 @@ select_best_resource <- function(resources, preferred_format = NULL, verbose = T
 #' \dontrun{
 #' # General exploration
 #' explore <- po_explore()
-#' 
+#'
 #' # Explore health-related data
 #' health <- po_explore("salud")
-#' 
+#'
 #' # See what MINSA publishes
 #' explore$by_organization$MINSA
-#' 
+#'
 #' # Find all available Excel files
 #' explore$by_format$XLSX
 #' }
 po_explore <- function(query = NULL, verbose = TRUE) {
-  
   # Get catalog
   if (!is.null(query) && query != "") {
-    if (verbose) message("Exploring data related to: ", query)
+    if (verbose) {
+      message("Exploring data related to: ", query)
+    }
     search_results <- po_search(query, use_cache = TRUE, verbose = FALSE)
     catalog_datasets <- search_results$datasets
     catalog_resources <- search_results$resources
   } else {
-    if (verbose) message("Exploring complete Peru open data catalog...")
+    if (verbose) {
+      message("Exploring complete Peru open data catalog...")
+    }
     catalog <- po_catalog(verbose = FALSE)
     catalog_datasets <- catalog$datasets
     catalog_resources <- catalog$resources
   }
-  
+
   if (nrow(catalog_datasets) == 0) {
-    stop("No datasets found", if (!is.null(query)) paste0(" for query: ", query) else "")
+    stop("No datasets found", if (!is.null(query)) {
+      paste0(" for query: ", query)
+    } else {
+      ""
+    })
   }
-  
+
   # 1. By Organization
-  if (verbose) message("Analyzing by organization...")
+  if (verbose) {
+    message("Analyzing by organization...")
+  }
   by_org <- split(catalog_datasets, catalog_datasets$organization)
   by_org <- lapply(by_org, function(org_data) {
     list(
       n_datasets = nrow(org_data),
       n_resources = sum(org_data$n_resources),
       total_size_mb = sum(org_data$total_size_mb),
-      datasets = org_data[order(org_data$last_updated, decreasing = TRUE), c("dataset_name", "title", "n_resources", "formats_available")]
+      datasets = org_data[order(org_data$last_updated, decreasing = TRUE), c(
+        "dataset_name",
+        "title",
+        "n_resources",
+        "formats_available"
+      )]
     )
   })
-  by_org <- by_org[order(sapply(by_org, function(x) x$n_datasets), decreasing = TRUE)]
-  
+  by_org <- by_org[order(sapply(by_org, function(x) {
+    x$n_datasets
+  }), decreasing = TRUE)]
+
   # 2. By Format
-  if (verbose) message("Analyzing by format...")
+  if (verbose) {
+    message("Analyzing by format...")
+  }
   by_format <- split(catalog_resources, catalog_resources$format)
   by_format <- lapply(by_format, function(fmt_data) {
     list(
       n_resources = nrow(fmt_data),
       total_size_mb = sum(fmt_data$size_mb, na.rm = TRUE),
       avg_size_mb = round(mean(fmt_data$size_mb, na.rm = TRUE), 2),
-      resources = fmt_data[order(fmt_data$size_mb, decreasing = TRUE), 
-                          c("resource_name", "dataset_title", "size_mb", "last_modified")]
+      resources = fmt_data[order(fmt_data$size_mb, decreasing = TRUE), c(
+        "resource_name",
+        "dataset_title",
+        "size_mb",
+        "last_modified"
+      )]
     )
   })
-  by_format <- by_format[order(sapply(by_format, function(x) x$n_resources), decreasing = TRUE)]
-  
+  by_format <- by_format[order(sapply(by_format, function(x) {
+    x$n_resources
+  }), decreasing = TRUE)]
+
   # 3. By Year
-  if (verbose) message("Analyzing temporal distribution...")
+  if (verbose) {
+    message("Analyzing temporal distribution...")
+  }
   catalog_datasets$year_updated <- substr(catalog_datasets$last_updated, 1, 4)
   year_summary <- table(catalog_datasets$year_updated)
   by_year <- list(
     summary = as.data.frame(year_summary),
     recent_years = names(tail(sort(year_summary), 5))
   )
-  
+
   # 4. By Size
-  if (verbose) message("Analyzing size distribution...")
+  if (verbose) {
+    message("Analyzing size distribution...")
+  }
   size_breaks <- c(0, 1, 10, 100, 1000, Inf)
   size_labels <- c("< 1 MB", "1-10 MB", "10-100 MB", "100 MB - 1 GB", "> 1 GB")
-  catalog_datasets$size_category <- cut(catalog_datasets$total_size_mb, 
-                                        breaks = size_breaks, 
-                                        labels = size_labels)
+  catalog_datasets$size_category <- cut(catalog_datasets$total_size_mb,
+    breaks = size_breaks,
+    labels = size_labels
+  )
   by_size <- list(
     distribution = table(catalog_datasets$size_category),
-    largest = catalog_datasets[order(catalog_datasets$total_size_mb, decreasing = TRUE), 
-                              c("title", "organization", "total_size_mb", "n_resources")][1:10, ]
+    largest = catalog_datasets[order(catalog_datasets$total_size_mb, decreasing = TRUE), c("title", "organization", "total_size_mb", "n_resources")][1:10, ]
   )
-  
+
   # 5. Recent updates
-  recent <- catalog_datasets[order(catalog_datasets$last_updated, decreasing = TRUE), 
-                            c("title", "organization", "last_updated", "n_resources", "formats_available")][1:20, ]
-  
+  recent <- catalog_datasets[order(catalog_datasets$last_updated, decreasing = TRUE), c(
+    "title",
+    "organization",
+    "last_updated",
+    "n_resources",
+    "formats_available"
+  )][1:20, ]
+
   # 6. Popular (most resources)
-  popular <- catalog_datasets[order(catalog_datasets$n_resources, decreasing = TRUE), 
-                             c("title", "organization", "n_resources", "formats_available", "total_size_mb")][1:20, ]
-  
+  popular <- catalog_datasets[order(catalog_datasets$n_resources, decreasing = TRUE), c(
+    "title",
+    "organization",
+    "n_resources",
+    "formats_available",
+    "total_size_mb"
+  )][1:20, ]
+
   # 7. Recommendations
   recommendations <- list()
-  
+
   if (!is.null(query)) {
     # Query-specific recommendations
     if (nrow(catalog_datasets) > 0) {
@@ -1209,10 +1472,10 @@ po_explore <- function(query = NULL, verbose = TRUE) {
       if (nrow(csv_datasets) > 0) {
         recommendations$csv_available <- csv_datasets[1:min(5, nrow(csv_datasets)), c("dataset_name", "title", "organization")]
       }
-      
+
       # Recently updated
       recommendations$recently_updated <- catalog_datasets[1:min(5, nrow(catalog_datasets)), c("dataset_name", "title", "last_updated")]
-      
+
       # Most comprehensive (most resources)
       recommendations$comprehensive <- catalog_datasets[order(catalog_datasets$n_resources, decreasing = TRUE), ][1:min(5, nrow(catalog_datasets)), c("dataset_name", "title", "n_resources")]
     }
@@ -1224,11 +1487,11 @@ po_explore <- function(query = NULL, verbose = TRUE) {
       economic_data = "Try: po_explore('economico') or po_explore('MEF')",
       education_data = "Try: po_explore('educacion') or po_explore('MINEDU')"
     )
-    
+
     recommendations$popular_organizations <- names(head(by_org, 5))
     recommendations$common_formats <- names(head(by_format, 5))
   }
-  
+
   # Create result
   result <- list(
     query = query,
@@ -1246,11 +1509,13 @@ po_explore <- function(query = NULL, verbose = TRUE) {
     popular = popular,
     recommendations = recommendations
   )
-  
+
   class(result) <- c("po_explore_result", "list")
-  
-  if (verbose) message("Exploration complete!")
-  
+
+  if (verbose) {
+    message("Exploration complete!")
+  }
+
   return(result)
 }
 
@@ -1260,30 +1525,36 @@ po_explore <- function(query = NULL, verbose = TRUE) {
 #' @export
 print.po_explore_result <- function(x, ...) {
   cli::cli_h1("Peru Open Data Exploration")
-  if (!is.null(x$query)) cli::cli_text("Query: {cli::col_cyan(x$query)}")
-  
+  if (!is.null(x$query)) {
+    cli::cli_text("Query: {cli::col_cyan(x$query)}")
+  }
+
   cli::cli_h2("Summary")
   cli::cli_text("  Datasets: {cli::col_green(x$summary$n_datasets)}")
   cli::cli_text("  Resources: {cli::col_green(x$summary$n_resources)}")
   cli::cli_text("  Organizations: {cli::col_green(x$summary$n_organizations)}")
   cli::cli_text("  Date range: {cli::col_yellow(paste(x$summary$date_range, collapse = ' to '))}")
-  
+
   cli::cli_h2("Top Organizations")
   top_orgs <- head(x$by_organization, 5)
   for (i in seq_along(top_orgs)) {
     org <- names(top_orgs)[i]
     info <- top_orgs[[i]]
-    cli::cli_text("  {cli::col_blue(i)}. {cli::style_bold(org)}: {cli::col_green(info$n_datasets)} datasets, {cli::col_green(info$n_resources)} resources")
+    cli::cli_text(
+      "  {cli::col_blue(i)}. {cli::style_bold(org)}: {cli::col_green(info$n_datasets)} datasets, {cli::col_green(info$n_resources)} resources"
+    )
   }
-  
+
   cli::cli_h2("Top Formats")
   top_formats <- head(x$by_format, 5)
   for (i in seq_along(top_formats)) {
     fmt <- names(top_formats)[i]
     info <- top_formats[[i]]
-    cli::cli_text("  {cli::col_blue(fmt)}: {cli::col_green(info$n_resources)} files (avg {cli::col_yellow(paste0(info$avg_size_mb, ' MB'))})")
+    cli::cli_text(
+      "  {cli::col_blue(fmt)}: {cli::col_green(info$n_resources)} files (avg {cli::col_yellow(paste0(info$avg_size_mb, ' MB'))})"
+    )
   }
-  
+
   cli::cli_h2("Recent Updates")
   for (i in 1:min(5, nrow(x$recent))) {
     title_truncated <- if (nchar(x$recent$title[i]) > 50) {
@@ -1291,41 +1562,58 @@ print.po_explore_result <- function(x, ...) {
     } else {
       x$recent$title[i]
     }
-    cli::cli_text("  {cli::symbol$bullet} {cli::style_bold(title_truncated)} ({cli::col_cyan(x$recent$last_updated[i])})")
+    cli::cli_text(
+      "  {cli::symbol$bullet} {cli::style_bold(title_truncated)} ({cli::col_cyan(x$recent$last_updated[i])})"
+    )
   }
-  
+
   if (!is.null(x$recommendations$csv_available)) {
     cli::cli_h2("Recommended Datasets (with CSV)")
     for (i in 1:nrow(x$recommendations$csv_available)) {
-      cli::cli_text("  {cli::symbol$bullet} {cli::col_green(x$recommendations$csv_available$dataset_name[i])}")
+      cli::cli_text(
+        "  {cli::symbol$bullet} {cli::col_green(x$recommendations$csv_available$dataset_name[i])}"
+      )
     }
   }
-  
+
   cli::cli_rule()
-  cli::cli_text("{cli::col_blue('Explore further with:')} $by_organization, $by_format, $recent, $popular")
+  cli::cli_text(
+    "{cli::col_blue('Explore further with:')} $by_organization, $by_format, $recent, $popular"
+  )
   invisible(x)
 }
 
 # Helper function to wrap text with proper indentation
-wrap_text <- function(text, prefix = "", width = 80, indent = 3) {
-  if (is.na(text) || text == "") return("")
-  
+wrap_text <- function(text,
+                      prefix = "",
+                      width = 80,
+                      indent = 3) {
+  if (is.na(text) || text == "") {
+    return("")
+  }
+
   # Calculate available width after prefix and indentation
   available_width <- width - nchar(prefix) - indent
-  
+
   # Split text into words
   words <- strsplit(text, "\\s+")[[1]]
-  if (length(words) == 0) return("")
-  
+  if (length(words) == 0) {
+    return("")
+  }
+
   lines <- character()
   current_line <- character()
   current_length <- 0
-  
+
   for (word in words) {
     # Check if adding this word would exceed the width
     word_length <- nchar(word)
-    space_needed <- if (length(current_line) == 0) word_length else word_length + 1
-    
+    space_needed <- if (length(current_line) == 0) {
+      word_length
+    } else {
+      word_length + 1
+    }
+
     if (current_length + space_needed <= available_width) {
       # Add word to current line
       current_line <- c(current_line, word)
@@ -1339,18 +1627,20 @@ wrap_text <- function(text, prefix = "", width = 80, indent = 3) {
       current_length <- word_length
     }
   }
-  
+
   # Add the last line
   if (length(current_line) > 0) {
     lines <- c(lines, paste(current_line, collapse = " "))
   }
-  
+
   # Format with proper indentation
-  if (length(lines) == 0) return("")
-  
+  if (length(lines) == 0) {
+    return("")
+  }
+
   # First line with prefix
   result <- paste0(prefix, lines[1])
-  
+
   # Additional lines with indentation
   if (length(lines) > 1) {
     indent_str <- paste(rep(" ", nchar(prefix) + indent), collapse = "")
@@ -1358,7 +1648,7 @@ wrap_text <- function(text, prefix = "", width = 80, indent = 3) {
       result <- paste0(result, "\n", indent_str, lines[i])
     }
   }
-  
+
   return(result)
 }
 
@@ -1367,115 +1657,199 @@ wrap_text <- function(text, prefix = "", width = 80, indent = 3) {
 #' @param max_items Maximum number of items to display
 #' @param ... Additional arguments passed to print methods
 #' @export
-print.po_datasets <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
+print.po_datasets <- function(x,
+                              max_items = getOption("peruopen.print_max", 10),
+                              ...) {
   n_total <- nrow(x)
   n_show <- min(max_items, n_total)
-  
+
   cli::cli_h1("Peru Open Data - Datasets ({n_total} total)")
-  
+
   if (n_total == 0) {
     cli::cli_text("{cli::col_red('No datasets found.')}")
     return(invisible(x))
   }
-  
+
   for (i in 1:n_show) {
     row <- x[i, ]
-    
+
     cli::cli_text("{cli::col_blue(i)}. {cli::style_bold(row$title)}")
-    
+
     # Organization info
-    org_text <- if (is.na(row$organization) || row$organization == "") "[Unknown]" else row$organization
-    
+    org_text <- if (is.na(row$organization) ||
+      row$organization == "") {
+      "[Unknown]"
+    } else {
+      row$organization
+    }
+
     # Size info
-    size_text <- if (is.na(row$total_size_mb)) "[Unknown]" else if (row$total_size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$total_size_mb)
-    
-    # Format info  
-    formats_text <- if (is.na(row$formats_available) || row$formats_available == "") "[Unknown]" else row$formats_available
-    
-    cli::cli_text("   Organization: {cli::col_magenta(org_text)} | Resources: {cli::col_green(row$n_resources)} ({cli::col_blue(formats_text)}) | Size: {cli::col_yellow(size_text)}")
-    
+    size_text <- if (is.na(row$total_size_mb)) {
+      "[Unknown]"
+    } else if (row$total_size_mb < 0.01) {
+      "< 0.01 MB"
+    } else {
+      sprintf("%.1f MB", row$total_size_mb)
+    }
+
+    # Format info
+    formats_text <- if (is.na(row$formats_available) ||
+      row$formats_available == "") {
+      "[Unknown]"
+    } else {
+      row$formats_available
+    }
+
+    cli::cli_text(
+      "   Organization: {cli::col_magenta(org_text)} | Resources: {cli::col_green(row$n_resources)} ({cli::col_blue(formats_text)}) | Size: {cli::col_yellow(size_text)}"
+    )
+
     # Date info
-    updated_text <- if (is.na(row$last_updated)) "[Unknown]" else row$last_updated
-    created_text <- if (is.na(row$created)) "[Unknown]" else row$created
-    
-    cli::cli_text("   Last updated: {cli::col_cyan(updated_text)} | Created: {cli::col_cyan(created_text)}")
-    
+    updated_text <- if (is.na(row$last_updated)) {
+      "[Unknown]"
+    } else {
+      row$last_updated
+    }
+    created_text <- if (is.na(row$created)) {
+      "[Unknown]"
+    } else {
+      row$created
+    }
+
+    cli::cli_text(
+      "   Last updated: {cli::col_cyan(updated_text)} | Created: {cli::col_cyan(created_text)}"
+    )
+
     # Notes (wrapped with proper indentation)
     if (!is.na(row$notes) && row$notes != "") {
-      notes_text <- if (nchar(row$notes) > 400) paste0(substr(row$notes, 1, 397), "...") else row$notes
-      notes_formatted <- wrap_text(notes_text, "   Notes: ", width = 90, indent = 0)
+      notes_text <- if (nchar(row$notes) > 400) {
+        paste0(substr(row$notes, 1, 397), "...")
+      } else {
+        row$notes
+      }
+      notes_formatted <- wrap_text(notes_text,
+        "   Notes: ",
+        width = 90,
+        indent = 0
+      )
       cli::cli_text(notes_formatted)
     }
-    
-    if (i < n_show) cli::cli_text("")
+
+    if (i < n_show) {
+      cli::cli_text("")
+    }
   }
-  
+
   if (n_total > n_show) {
     cli::cli_text("")
-    cli::cli_text("{cli::col_silver('... (showing')} {cli::col_green(n_show)} {cli::col_silver('of')} {cli::col_green(n_total)} {cli::col_silver('datasets)')}")
+    cli::cli_text(
+      "{cli::col_silver('... (showing')} {cli::col_green(n_show)} {cli::col_silver('of')} {cli::col_green(n_total)} {cli::col_silver('datasets)')}"
+    )
   }
-  
+
   cli::cli_rule()
-  cli::cli_text("{cli::col_blue('Access individual datasets:')} x[1], x[2], etc. | {cli::col_blue('Full tibble:')} as_tibble(x)")
+  cli::cli_text(
+    "{cli::col_blue('Access individual datasets:')} x[1], x[2], etc. | {cli::col_blue('Full tibble:')} as_tibble(x)"
+  )
   invisible(x)
 }
 
-#' Print method for resources tibbles  
+#' Print method for resources tibbles
 #' @param x A po_resources object
 #' @param max_items Maximum number of items to display
 #' @param ... Additional arguments passed to print methods
 #' @export
-print.po_resources <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
+print.po_resources <- function(x,
+                               max_items = getOption("peruopen.print_max", 10),
+                               ...) {
   n_total <- nrow(x)
   n_show <- min(max_items, n_total)
-  
+
   cli::cli_h1("Peru Open Data - Resources ({n_total} total)")
-  
+
   if (n_total == 0) {
     cli::cli_text("{cli::col_red('No resources found.')}")
     return(invisible(x))
   }
-  
+
   for (i in 1:n_show) {
     row <- x[i, ]
-    
+
     # Resource name and size
-    size_text <- if (is.na(row$size_mb)) "[Unknown]" else if (row$size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$size_mb)
-    cli::cli_text("{cli::col_blue(i)}. {cli::style_bold(row$resource_name)} ({cli::col_yellow(size_text)})")
-    
+    size_text <- if (is.na(row$size_mb)) {
+      "[Unknown]"
+    } else if (row$size_mb < 0.01) {
+      "< 0.01 MB"
+    } else {
+      sprintf("%.1f MB", row$size_mb)
+    }
+    cli::cli_text(
+      "{cli::col_blue(i)}. {cli::style_bold(row$resource_name)} ({cli::col_yellow(size_text)})"
+    )
+
     # Dataset info
     cli::cli_text("   Dataset: {cli::style_italic(row$dataset_title)}")
-    
+
     # Format and date info
-    format_text <- if (is.na(row$format)) "[Unknown]" else toupper(row$format)
-    modified_text <- if (is.na(row$last_modified)) "[Unknown]" else row$last_modified
-    
-    cli::cli_text("   Format: {cli::col_blue(format_text)} | Last modified: {cli::col_cyan(modified_text)}")
-    
+    format_text <- if (is.na(row$format)) {
+      "[Unknown]"
+    } else {
+      toupper(row$format)
+    }
+    modified_text <- if (is.na(row$last_modified)) {
+      "[Unknown]"
+    } else {
+      row$last_modified
+    }
+
+    cli::cli_text(
+      "   Format: {cli::col_blue(format_text)} | Last modified: {cli::col_cyan(modified_text)}"
+    )
+
     # URL (wrapped with proper indentation)
     if (!is.na(row$url) && row$url != "") {
-      url_text <- if (nchar(row$url) > 300) paste0(substr(row$url, 1, 297), "...") else row$url
+      url_text <- if (nchar(row$url) > 300) {
+        paste0(substr(row$url, 1, 297), "...")
+      } else {
+        row$url
+      }
       url_formatted <- wrap_text(url_text, "   URL: ", width = 90, indent = 0)
       cli::cli_text(url_formatted)
     }
-    
+
     # Description (wrapped with proper indentation)
-    if (!is.na(row$description) && row$description != "" && row$description != "Resource description") {
-      desc_text <- if (nchar(row$description) > 400) paste0(substr(row$description, 1, 397), "...") else row$description
-      desc_formatted <- wrap_text(desc_text, "   Description: ", width = 90, indent = 0)
+    if (!is.na(row$description) &&
+      row$description != "" &&
+      row$description != "Resource description") {
+      desc_text <- if (nchar(row$description) > 400) {
+        paste0(substr(row$description, 1, 397), "...")
+      } else {
+        row$description
+      }
+      desc_formatted <- wrap_text(desc_text,
+        "   Description: ",
+        width = 90,
+        indent = 0
+      )
       cli::cli_text(desc_formatted)
     }
-    
-    if (i < n_show) cli::cli_text("")
+
+    if (i < n_show) {
+      cli::cli_text("")
+    }
   }
-  
+
   if (n_total > n_show) {
     cli::cli_text("")
-    cli::cli_text("{cli::col_silver('... (showing')} {cli::col_green(n_show)} {cli::col_silver('of')} {cli::col_green(n_total)} {cli::col_silver('resources)')}")
+    cli::cli_text(
+      "{cli::col_silver('... (showing')} {cli::col_green(n_show)} {cli::col_silver('of')} {cli::col_green(n_total)} {cli::col_silver('resources)')}"
+    )
   }
-  
+
   cli::cli_rule()
-  cli::cli_text("{cli::col_blue('Access individual resources:')} x[1], x[2], etc. | {cli::col_blue('Full tibble:')} as_tibble(x)")
+  cli::cli_text(
+    "{cli::col_blue('Access individual resources:')} x[1], x[2], etc. | {cli::col_blue('Full tibble:')} as_tibble(x)"
+  )
   invisible(x)
 }
 
@@ -1488,7 +1862,7 @@ as_tibble.po_datasets <- function(x, ...) {
   x
 }
 
-#' Convert po_resources back to regular tibble  
+#' Convert po_resources back to regular tibble
 #' @param x A po_resources object
 #' @param ... Additional arguments passed to as_tibble
 #' @export
@@ -1504,24 +1878,39 @@ as_tibble.po_resources <- function(x, ...) {
 #' @export
 knit_print.po_search_result <- function(x, ...) {
   output <- character()
-  
+
   output <- c(output, "# Peru Open Data Search Results")
   output <- c(output, "")
   output <- c(output, paste0("**Query:** ", x$summary$query))
-  output <- c(output, paste0("**Found:** ", x$summary$n_datasets, " datasets with ", x$summary$n_resources, " resources"))
-  output <- c(output, paste0("**Total size:** ", x$summary$total_size_gb, " GB"))
+  output <- c(
+    output,
+    paste0(
+      "**Found:** ",
+      x$summary$n_datasets,
+      " datasets with ",
+      x$summary$n_resources,
+      " resources"
+    )
+  )
+  output <- c(
+    output,
+    paste0("**Total size:** ", x$summary$total_size_gb, " GB")
+  )
   output <- c(output, "")
-  
+
   if (length(x$summary$formats_found) > 0) {
     output <- c(output, "## Top formats")
     output <- c(output, "")
     top_formats <- head(x$summary$formats_found, 5)
     for (i in seq_along(top_formats)) {
-      output <- c(output, paste0("- **", names(top_formats)[i], "**: ", top_formats[i], " files"))
+      output <- c(
+        output,
+        paste0("- **", names(top_formats)[i], "**: ", top_formats[i], " files")
+      )
     }
     output <- c(output, "")
   }
-  
+
   if (x$summary$n_datasets > 0) {
     output <- c(output, "## Sample datasets")
     output <- c(output, "")
@@ -1532,19 +1921,36 @@ knit_print.po_search_result <- function(x, ...) {
       } else {
         sample_data$title[i]
       }
-      output <- c(output, paste0("- **", title_truncated, "** (", sample_data$organization[i], ") [", sample_data$n_resources[i], " resources]"))
+      output <- c(
+        output,
+        paste0(
+          "- **",
+          title_truncated,
+          "** (",
+          sample_data$organization[i],
+          ") [",
+          sample_data$n_resources[i],
+          " resources]"
+        )
+      )
     }
-    
+
     if (x$summary$n_datasets > 5) {
-      output <- c(output, paste0("- ... and ", x$summary$n_datasets - 5, " more datasets"))
+      output <- c(
+        output,
+        paste0("- ... and ", x$summary$n_datasets - 5, " more datasets")
+      )
     }
     output <- c(output, "")
   }
-  
+
   output <- c(output, "---")
   output <- c(output, "")
-  output <- c(output, "**Access data with:** `$datasets`, `$resources`, `$summary`")
-  
+  output <- c(
+    output,
+    "**Access data with:** `$datasets`, `$resources`, `$summary`"
+  )
+
   knitr::asis_output(paste(output, collapse = "\n"))
 }
 
@@ -1555,41 +1961,70 @@ knit_print.po_search_result <- function(x, ...) {
 #' @export
 knit_print.po_explore_result <- function(x, ...) {
   output <- character()
-  
+
   output <- c(output, "# Peru Open Data Exploration")
   if (!is.null(x$query)) {
     output <- c(output, paste0("**Query:** ", x$query))
   }
   output <- c(output, "")
-  
+
   output <- c(output, "## Summary")
   output <- c(output, "")
   output <- c(output, paste0("- **Datasets:** ", x$summary$n_datasets))
   output <- c(output, paste0("- **Resources:** ", x$summary$n_resources))
-  output <- c(output, paste0("- **Organizations:** ", x$summary$n_organizations))
-  output <- c(output, paste0("- **Date range:** ", paste(x$summary$date_range, collapse = " to ")))
+  output <- c(
+    output,
+    paste0("- **Organizations:** ", x$summary$n_organizations)
+  )
+  output <- c(output, paste0(
+    "- **Date range:** ",
+    paste(x$summary$date_range, collapse = " to ")
+  ))
   output <- c(output, "")
-  
+
   output <- c(output, "## Top Organizations")
   output <- c(output, "")
   top_orgs <- head(x$by_organization, 5)
   for (i in seq_along(top_orgs)) {
     org <- names(top_orgs)[i]
     info <- top_orgs[[i]]
-    output <- c(output, paste0(i, ". **", org, "**: ", info$n_datasets, " datasets, ", info$n_resources, " resources"))
+    output <- c(
+      output,
+      paste0(
+        i,
+        ". **",
+        org,
+        "**: ",
+        info$n_datasets,
+        " datasets, ",
+        info$n_resources,
+        " resources"
+      )
+    )
   }
   output <- c(output, "")
-  
+
   output <- c(output, "## Top Formats")
   output <- c(output, "")
   top_formats <- head(x$by_format, 5)
   for (i in seq_along(top_formats)) {
     fmt <- names(top_formats)[i]
     info <- top_formats[[i]]
-    output <- c(output, paste0("- **", fmt, "**: ", info$n_resources, " files (avg ", info$avg_size_mb, " MB)"))
+    output <- c(
+      output,
+      paste0(
+        "- **",
+        fmt,
+        "**: ",
+        info$n_resources,
+        " files (avg ",
+        info$avg_size_mb,
+        " MB)"
+      )
+    )
   }
   output <- c(output, "")
-  
+
   output <- c(output, "## Recent Updates")
   output <- c(output, "")
   for (i in 1:min(5, nrow(x$recent))) {
@@ -1598,23 +2033,32 @@ knit_print.po_explore_result <- function(x, ...) {
     } else {
       x$recent$title[i]
     }
-    output <- c(output, paste0("- **", title_truncated, "** (", x$recent$last_updated[i], ")"))
+    output <- c(
+      output,
+      paste0("- **", title_truncated, "** (", x$recent$last_updated[i], ")")
+    )
   }
   output <- c(output, "")
-  
+
   if (!is.null(x$recommendations$csv_available)) {
     output <- c(output, "## Recommended Datasets (with CSV)")
     output <- c(output, "")
     for (i in 1:nrow(x$recommendations$csv_available)) {
-      output <- c(output, paste0("- ", x$recommendations$csv_available$dataset_name[i]))
+      output <- c(
+        output,
+        paste0("- ", x$recommendations$csv_available$dataset_name[i])
+      )
     }
     output <- c(output, "")
   }
-  
+
   output <- c(output, "---")
   output <- c(output, "")
-  output <- c(output, "**Explore further with:** `$by_organization`, `$by_format`, `$recent`, `$popular`")
-  
+  output <- c(
+    output,
+    "**Explore further with:** `$by_organization`, `$by_format`, `$recent`, `$popular`"
+  )
+
   knitr::asis_output(paste(output, collapse = "\n"))
 }
 
@@ -1624,64 +2068,106 @@ knit_print.po_explore_result <- function(x, ...) {
 #' @param ... Additional arguments passed to knit_print methods
 #' @importFrom knitr knit_print asis_output
 #' @export
-knit_print.po_datasets <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
+knit_print.po_datasets <- function(x,
+                                   max_items = getOption("peruopen.print_max", 10),
+                                   ...) {
   n_total <- nrow(x)
   n_show <- min(max_items, n_total)
-  
+
   output <- character()
-  
-  output <- c(output, paste0("# Peru Open Data - Datasets (", n_total, " total)"))
+
+  output <- c(
+    output,
+    paste0("# Peru Open Data - Datasets (", n_total, " total)")
+  )
   output <- c(output, "")
-  
+
   if (n_total == 0) {
     output <- c(output, "**No datasets found.**")
     return(knitr::asis_output(paste(output, collapse = "\n")))
   }
-  
+
   for (i in 1:n_show) {
     row <- x[i, ]
-    
+
     output <- c(output, paste0(i, ". **", row$title, "**"))
     output <- c(output, "")
-    
+
     # Organization info
-    org_text <- if (is.na(row$organization) || row$organization == "") "[Unknown]" else row$organization
-    
+    org_text <- if (is.na(row$organization) ||
+      row$organization == "") {
+      "[Unknown]"
+    } else {
+      row$organization
+    }
+
     # Size info
-    size_text <- if (is.na(row$total_size_mb)) "[Unknown]" else if (row$total_size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$total_size_mb)
-    
-    # Format info  
-    formats_text <- if (is.na(row$formats_available) || row$formats_available == "") "[Unknown]" else row$formats_available
-    
+    size_text <- if (is.na(row$total_size_mb)) {
+      "[Unknown]"
+    } else if (row$total_size_mb < 0.01) {
+      "< 0.01 MB"
+    } else {
+      sprintf("%.1f MB", row$total_size_mb)
+    }
+
+    # Format info
+    formats_text <- if (is.na(row$formats_available) ||
+      row$formats_available == "") {
+      "[Unknown]"
+    } else {
+      row$formats_available
+    }
+
     output <- c(output, paste0("   - **Organization:** ", org_text))
-    output <- c(output, paste0("   - **Resources:** ", row$n_resources, " (", formats_text, ")"))
+    output <- c(
+      output,
+      paste0("   - **Resources:** ", row$n_resources, " (", formats_text, ")")
+    )
     output <- c(output, paste0("   - **Size:** ", size_text))
-    
+
     # Date info
-    updated_text <- if (is.na(row$last_updated)) "[Unknown]" else row$last_updated
-    created_text <- if (is.na(row$created)) "[Unknown]" else row$created
-    
+    updated_text <- if (is.na(row$last_updated)) {
+      "[Unknown]"
+    } else {
+      row$last_updated
+    }
+    created_text <- if (is.na(row$created)) {
+      "[Unknown]"
+    } else {
+      row$created
+    }
+
     output <- c(output, paste0("   - **Last updated:** ", updated_text))
     output <- c(output, paste0("   - **Created:** ", created_text))
-    
+
     # Notes
     if (!is.na(row$notes) && row$notes != "") {
-      notes_text <- if (nchar(row$notes) > 400) paste0(substr(row$notes, 1, 397), "...") else row$notes
+      notes_text <- if (nchar(row$notes) > 400) {
+        paste0(substr(row$notes, 1, 397), "...")
+      } else {
+        row$notes
+      }
       output <- c(output, paste0("   - **Notes:** ", notes_text))
     }
-    
+
     output <- c(output, "")
   }
-  
+
   if (n_total > n_show) {
-    output <- c(output, paste0("... (showing ", n_show, " of ", n_total, " datasets)"))
+    output <- c(
+      output,
+      paste0("... (showing ", n_show, " of ", n_total, " datasets)")
+    )
     output <- c(output, "")
   }
-  
+
   output <- c(output, "---")
   output <- c(output, "")
-  output <- c(output, "**Access individual datasets:** `x[1]`, `x[2]`, etc. | **Full tibble:** `as_tibble(x)`")
-  
+  output <- c(
+    output,
+    "**Access individual datasets:** `x[1]`, `x[2]`, etc. | **Full tibble:** `as_tibble(x)`"
+  )
+
   knitr::asis_output(paste(output, collapse = "\n"))
 }
 
@@ -1691,61 +2177,99 @@ knit_print.po_datasets <- function(x, max_items = getOption("peruopen.print_max"
 #' @param ... Additional arguments passed to knit_print methods
 #' @importFrom knitr knit_print asis_output
 #' @export
-knit_print.po_resources <- function(x, max_items = getOption("peruopen.print_max", 10), ...) {
+knit_print.po_resources <- function(x,
+                                    max_items = getOption("peruopen.print_max", 10),
+                                    ...) {
   n_total <- nrow(x)
   n_show <- min(max_items, n_total)
-  
+
   output <- character()
-  
-  output <- c(output, paste0("# Peru Open Data - Resources (", n_total, " total)"))
+
+  output <- c(
+    output,
+    paste0("# Peru Open Data - Resources (", n_total, " total)")
+  )
   output <- c(output, "")
-  
+
   if (n_total == 0) {
     output <- c(output, "**No resources found.**")
     return(knitr::asis_output(paste(output, collapse = "\n")))
   }
-  
+
   for (i in 1:n_show) {
     row <- x[i, ]
-    
+
     # Resource name and size
-    size_text <- if (is.na(row$size_mb)) "[Unknown]" else if (row$size_mb < 0.01) "< 0.01 MB" else sprintf("%.1f MB", row$size_mb)
-    output <- c(output, paste0(i, ". **", row$resource_name, "** (", size_text, ")"))
+    size_text <- if (is.na(row$size_mb)) {
+      "[Unknown]"
+    } else if (row$size_mb < 0.01) {
+      "< 0.01 MB"
+    } else {
+      sprintf("%.1f MB", row$size_mb)
+    }
+    output <- c(
+      output,
+      paste0(i, ". **", row$resource_name, "** (", size_text, ")")
+    )
     output <- c(output, "")
-    
+
     # Dataset info
     output <- c(output, paste0("   - **Dataset:** *", row$dataset_title, "*"))
-    
+
     # Format and date info
-    format_text <- if (is.na(row$format)) "[Unknown]" else toupper(row$format)
-    modified_text <- if (is.na(row$last_modified)) "[Unknown]" else row$last_modified
-    
+    format_text <- if (is.na(row$format)) {
+      "[Unknown]"
+    } else {
+      toupper(row$format)
+    }
+    modified_text <- if (is.na(row$last_modified)) {
+      "[Unknown]"
+    } else {
+      row$last_modified
+    }
+
     output <- c(output, paste0("   - **Format:** ", format_text))
     output <- c(output, paste0("   - **Last modified:** ", modified_text))
-    
+
     # URL
     if (!is.na(row$url) && row$url != "") {
-      url_text <- if (nchar(row$url) > 300) paste0(substr(row$url, 1, 297), "...") else row$url
+      url_text <- if (nchar(row$url) > 300) {
+        paste0(substr(row$url, 1, 297), "...")
+      } else {
+        row$url
+      }
       output <- c(output, paste0("   - **URL:** ", url_text))
     }
-    
+
     # Description
-    if (!is.na(row$description) && row$description != "" && row$description != "Resource description") {
-      desc_text <- if (nchar(row$description) > 400) paste0(substr(row$description, 1, 397), "...") else row$description
+    if (!is.na(row$description) &&
+      row$description != "" &&
+      row$description != "Resource description") {
+      desc_text <- if (nchar(row$description) > 400) {
+        paste0(substr(row$description, 1, 397), "...")
+      } else {
+        row$description
+      }
       output <- c(output, paste0("   - **Description:** ", desc_text))
     }
-    
+
     output <- c(output, "")
   }
-  
+
   if (n_total > n_show) {
-    output <- c(output, paste0("... (showing ", n_show, " of ", n_total, " resources)"))
+    output <- c(
+      output,
+      paste0("... (showing ", n_show, " of ", n_total, " resources)")
+    )
     output <- c(output, "")
   }
-  
+
   output <- c(output, "---")
   output <- c(output, "")
-  output <- c(output, "**Access individual resources:** `x[1]`, `x[2]`, etc. | **Full tibble:** `as_tibble(x)`")
-  
+  output <- c(
+    output,
+    "**Access individual resources:** `x[1]`, `x[2]`, etc. | **Full tibble:** `as_tibble(x)`"
+  )
+
   knitr::asis_output(paste(output, collapse = "\n"))
 }

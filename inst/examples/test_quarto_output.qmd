@@ -24,7 +24,7 @@ results
 ## Test po_explore Output
 
 ```{r explore-test}
-# Test exploration results  
+# Test exploration results
 exploration <- po_explore("educacion", max_datasets = 5)
 exploration
 ```

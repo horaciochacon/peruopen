@@ -14,12 +14,12 @@ po_list_datasets <- function(use_cache = TRUE) {
   } else {
     packages <- ckan_get_packages()
   }
-  
+
   if (length(packages) == 0) {
     rlang::warn("No datasets found in CKAN portal")
     return(tibble::tibble(name = character(0)))
   }
-  
+
   tibble::tibble(name = packages)
 }
 
@@ -34,15 +34,14 @@ po_list_datasets <- function(use_cache = TRUE) {
 #' @return A tibble with filtered dataset information
 #' @keywords internal
 # Internal function - use po_search() instead
-po_search_datasets <- function(query = NULL, tags = NULL, organizations = NULL, 
-                              limit = 50, use_cache = TRUE, clean_text = TRUE) {
-  
+po_search_datasets <- function(query = NULL, tags = NULL, organizations = NULL,
+                               limit = 50, use_cache = TRUE, clean_text = TRUE) {
   if (use_cache) {
     packages_data <- get_current_packages_cached(limit = limit)
   } else {
-    packages_data <- ckan_get_current_packages_with_resources(limit = limit)
+    packages_data <- ckan_get_packages_resources(limit = limit)
   }
-  
+
   if (length(packages_data) == 0) {
     return(tibble::tibble(
       name = character(0),
@@ -54,12 +53,12 @@ po_search_datasets <- function(query = NULL, tags = NULL, organizations = NULL,
       last_modified = character(0)
     ))
   }
-  
+
   metadata_list <- vector("list", length(packages_data))
-  
+
   for (i in seq_along(packages_data)) {
     pkg_data <- packages_data[[i]]
-    
+
     # Extract tags properly
     pkg_tags <- character(0)
     if (!is.null(pkg_data$tags) && length(pkg_data$tags) > 0) {
@@ -67,18 +66,18 @@ po_search_datasets <- function(query = NULL, tags = NULL, organizations = NULL,
         if (is.list(x) && !is.null(x$name)) x$name else x
       })
     }
-    
+
     # Extract organization properly
     org_title <- NA_character_
     if (!is.null(pkg_data$groups) && length(pkg_data$groups) > 0) {
       org_title <- pkg_data$groups[[1]]$title %||% NA_character_
     }
-    
+
     # Apply text cleaning if requested
     clean_title <- clean_string(pkg_data$title %||% NA_character_, clean_text)
     clean_notes <- clean_html_text(pkg_data$notes %||% NA_character_, clean_text)
     clean_org <- clean_string(org_title, clean_text)
-    
+
     metadata_list[[i]] <- list(
       name = pkg_data$name %||% NA_character_,
       title = clean_title,
@@ -89,35 +88,37 @@ po_search_datasets <- function(query = NULL, tags = NULL, organizations = NULL,
       last_modified = pkg_data$metadata_modified %||% NA_character_
     )
   }
-  
+
   result <- dplyr::bind_rows(metadata_list)
-  
+
   if (!is.null(query) && query != "") {
     query_pattern <- paste0("(?i)", gsub("([.*+?^${}()|\\[\\]\\\\])", "\\\\\\1", query))
     result <- result |>
       dplyr::filter(
         grepl(query_pattern, name, perl = TRUE) |
-        grepl(query_pattern, title, perl = TRUE) |
-        grepl(query_pattern, notes, perl = TRUE)
+          grepl(query_pattern, title, perl = TRUE) |
+          grepl(query_pattern, notes, perl = TRUE)
       )
   }
-  
+
   if (!is.null(tags) && length(tags) > 0) {
-    search_tags <- tags  # Store search terms to avoid confusion
+    search_tags <- tags # Store search terms to avoid confusion
     result <- result |>
       dplyr::filter(
         sapply(tags, function(pkg_tags) {
-          if (length(pkg_tags) == 0) return(FALSE)
+          if (length(pkg_tags) == 0) {
+            return(FALSE)
+          }
           any(sapply(search_tags, function(tag) any(grepl(tag, pkg_tags, ignore.case = TRUE))))
         })
       )
   }
-  
+
   if (!is.null(organizations) && length(organizations) > 0) {
     result <- result |>
       dplyr::filter(organization %in% organizations)
   }
-  
+
   result
 }
 
@@ -133,12 +134,12 @@ po_list_organizations <- function(use_cache = TRUE) {
   } else {
     groups <- ckan_get_groups()
   }
-  
+
   if (length(groups) == 0) {
     rlang::warn("No organizations found in CKAN portal")
     return(tibble::tibble(name = character(0), title = character(0)))
   }
-  
+
   tibble::tibble(
     name = sapply(groups, function(x) x$name %||% NA_character_),
     title = sapply(groups, function(x) x$title %||% NA_character_)
@@ -156,28 +157,27 @@ po_list_organizations <- function(use_cache = TRUE) {
 #' @return A tibble with filtered dataset information
 #' @keywords internal
 # Internal function - use po_search() instead
-po_search_datasets_paginated <- function(query = NULL, tags = NULL, organizations = NULL, 
+po_search_datasets_paginated <- function(query = NULL, tags = NULL, organizations = NULL,
                                          max_results = 500, page_size = 100, clean_text = TRUE) {
-  
   all_results <- list()
   current_offset <- 0
   total_fetched <- 0
-  
+
   while (total_fetched < max_results) {
     remaining <- max_results - total_fetched
     current_limit <- min(page_size, remaining)
-    
-    packages_data <- ckan_get_current_packages_with_resources(
-      limit = current_limit, 
+
+    packages_data <- ckan_get_packages_resources(
+      limit = current_limit,
       offset = current_offset
     )
-    
+
     if (length(packages_data) == 0) break
-    
+
     page_results <- list()
     for (i in seq_along(packages_data)) {
       pkg_data <- packages_data[[i]]
-      
+
       # Extract tags properly
       pkg_tags <- character(0)
       if (!is.null(pkg_data$tags) && length(pkg_data$tags) > 0) {
@@ -185,18 +185,18 @@ po_search_datasets_paginated <- function(query = NULL, tags = NULL, organization
           if (is.list(x) && !is.null(x$name)) x$name else x
         })
       }
-      
+
       # Extract organization properly
       org_title <- NA_character_
       if (!is.null(pkg_data$groups) && length(pkg_data$groups) > 0) {
         org_title <- pkg_data$groups[[1]]$title %||% NA_character_
       }
-      
+
       # Apply text cleaning if requested
       clean_title <- clean_string(pkg_data$title %||% NA_character_, clean_text)
       clean_notes <- clean_html_text(pkg_data$notes %||% NA_character_, clean_text)
       clean_org <- clean_string(org_title, clean_text)
-      
+
       page_results[[i]] <- list(
         name = pkg_data$name %||% NA_character_,
         title = clean_title,
@@ -207,14 +207,14 @@ po_search_datasets_paginated <- function(query = NULL, tags = NULL, organization
         last_modified = pkg_data$metadata_modified %||% NA_character_
       )
     }
-    
+
     all_results <- append(all_results, page_results)
     total_fetched <- total_fetched + length(packages_data)
     current_offset <- current_offset + current_limit
-    
+
     if (length(packages_data) < current_limit) break
   }
-  
+
   if (length(all_results) == 0) {
     return(tibble::tibble(
       name = character(0),
@@ -226,36 +226,38 @@ po_search_datasets_paginated <- function(query = NULL, tags = NULL, organization
       last_modified = character(0)
     ))
   }
-  
+
   result <- dplyr::bind_rows(all_results)
-  
+
   # Apply filters
   if (!is.null(query) && query != "") {
     query_pattern <- paste0("(?i)", gsub("([.*+?^${}()|\\[\\]\\\\])", "\\\\\\1", query))
     result <- result |>
       dplyr::filter(
         grepl(query_pattern, name, perl = TRUE) |
-        grepl(query_pattern, title, perl = TRUE) |
-        grepl(query_pattern, notes, perl = TRUE)
+          grepl(query_pattern, title, perl = TRUE) |
+          grepl(query_pattern, notes, perl = TRUE)
       )
   }
-  
+
   if (!is.null(tags) && length(tags) > 0) {
     search_tags <- tags
     result <- result |>
       dplyr::filter(
         sapply(tags, function(pkg_tags) {
-          if (length(pkg_tags) == 0) return(FALSE)
+          if (length(pkg_tags) == 0) {
+            return(FALSE)
+          }
           any(sapply(search_tags, function(tag) any(grepl(tag, pkg_tags, ignore.case = TRUE))))
         })
       )
   }
-  
+
   if (!is.null(organizations) && length(organizations) > 0) {
     result <- result |>
       dplyr::filter(organization %in% organizations)
   }
-  
+
   result
 }
 
@@ -270,15 +272,14 @@ po_search_datasets_paginated <- function(query = NULL, tags = NULL, organization
 #' @return A list with datasets tibble and resources tibble
 #' @keywords internal
 # Internal function - use po_catalog() instead
-po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations = NULL, 
-                                      limit = 50, use_cache = TRUE, clean_text = TRUE) {
-  
+po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations = NULL,
+                                       limit = 50, use_cache = TRUE, clean_text = TRUE) {
   if (use_cache) {
     packages_data <- get_current_packages_cached(limit = limit)
   } else {
-    packages_data <- ckan_get_current_packages_with_resources(limit = limit)
+    packages_data <- ckan_get_packages_resources(limit = limit)
   }
-  
+
   if (length(packages_data) == 0) {
     return(list(
       datasets = tibble::tibble(
@@ -295,13 +296,13 @@ po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations 
       )
     ))
   }
-  
+
   datasets_list <- vector("list", length(packages_data))
   resources_list <- vector("list", length(packages_data))
-  
+
   for (i in seq_along(packages_data)) {
     pkg_data <- packages_data[[i]]
-    
+
     # Extract tags properly
     pkg_tags <- character(0)
     if (!is.null(pkg_data$tags) && length(pkg_data$tags) > 0) {
@@ -309,17 +310,17 @@ po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations 
         if (is.list(x) && !is.null(x$name)) x$name else x
       })
     }
-    
+
     # Extract organization properly
     org_title <- NA_character_
     if (!is.null(pkg_data$groups) && length(pkg_data$groups) > 0) {
       org_title <- pkg_data$groups[[1]]$title %||% NA_character_
     }
-    
+
     # Dataset metadata with proper date formatting
     created_date <- pkg_data$metadata_created %||% NA_character_
     modified_date <- pkg_data$metadata_modified %||% NA_character_
-    
+
     # Parse dates if they exist
     if (!is.na(created_date) && created_date != "") {
       created_date <- format_peru_date(created_date)
@@ -327,13 +328,13 @@ po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations 
     if (!is.na(modified_date) && modified_date != "") {
       modified_date <- format_peru_date(modified_date)
     }
-    
+
     # Apply text cleaning to datasets
     clean_title <- clean_string(pkg_data$title %||% NA_character_, clean_text)
     clean_notes <- clean_html_text(pkg_data$notes %||% NA_character_, clean_text)
     clean_org <- clean_string(org_title, clean_text)
     clean_author <- clean_string(pkg_data$author %||% NA_character_, clean_text)
-    
+
     datasets_list[[i]] <- list(
       dataset_id = pkg_data$id %||% NA_character_,
       name = pkg_data$name %||% NA_character_,
@@ -347,28 +348,28 @@ po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations 
       modified = modified_date,
       num_resources = length(pkg_data$resources %||% list())
     )
-    
+
     # Resources metadata
     if (!is.null(pkg_data$resources) && length(pkg_data$resources) > 0) {
       pkg_resources <- vector("list", length(pkg_data$resources))
       for (j in seq_along(pkg_data$resources)) {
         res <- pkg_data$resources[[j]]
-        
+
         # Format resource dates
         res_created <- res$created %||% NA_character_
         res_modified <- res$last_modified %||% NA_character_
-        
+
         if (!is.na(res_created) && res_created != "") {
           res_created <- format_peru_date(res_created)
         }
         if (!is.na(res_modified) && res_modified != "") {
           res_modified <- format_peru_date(res_modified)
         }
-        
+
         # Apply text cleaning to resources
         clean_res_name <- clean_string(res$name %||% NA_character_, clean_text)
         clean_res_desc <- clean_html_text(res$description %||% NA_character_, clean_text)
-        
+
         pkg_resources[[j]] <- list(
           dataset_id = pkg_data$id %||% NA_character_,
           dataset_name = pkg_data$name %||% NA_character_,
@@ -388,9 +389,9 @@ po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations 
       resources_list[[i]] <- list()
     }
   }
-  
+
   datasets <- dplyr::bind_rows(datasets_list)
-  
+
   # Flatten resources list
   flat_resources <- unlist(resources_list, recursive = FALSE)
   if (length(flat_resources) > 0) {
@@ -403,31 +404,31 @@ po_get_structured_metadata <- function(query = NULL, tags = NULL, organizations 
       created = character(0), last_modified = character(0)
     )
   }
-  
+
   # Apply filters to datasets
   if (!is.null(query) && query != "") {
     query_pattern <- paste0("(?i)", gsub("([.*+?^${}()|\\[\\]\\\\])", "\\\\\\1", query))
     filtered_ids <- datasets |>
       dplyr::filter(
         grepl(query_pattern, name, perl = TRUE) |
-        grepl(query_pattern, title, perl = TRUE) |
-        grepl(query_pattern, notes, perl = TRUE)
+          grepl(query_pattern, title, perl = TRUE) |
+          grepl(query_pattern, notes, perl = TRUE)
       ) |>
       dplyr::pull(dataset_id)
-    
+
     datasets <- datasets |> dplyr::filter(dataset_id %in% filtered_ids)
     resources <- resources |> dplyr::filter(dataset_id %in% filtered_ids)
   }
-  
+
   if (!is.null(organizations) && length(organizations) > 0) {
     filtered_ids <- datasets |>
       dplyr::filter(organization %in% organizations) |>
       dplyr::pull(dataset_id)
-    
+
     datasets <- datasets |> dplyr::filter(dataset_id %in% filtered_ids)
     resources <- resources |> dplyr::filter(dataset_id %in% filtered_ids)
   }
-  
+
   list(datasets = datasets, resources = resources)
 }
 
