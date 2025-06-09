@@ -1,4 +1,10 @@
-# peruopen <img src="man/figures/logo.png" align="right" height="280" />
+# Peru Open - Access Peru's Open Data Portal
+
+<img src="man/figures/logo.png"
+     align="right"
+     height="200"
+     alt="peruopen hex sticker"/>
+
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/horaciochacon/peruopen/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/horaciochacon/peruopen/actions/workflows/R-CMD-check.yaml)
